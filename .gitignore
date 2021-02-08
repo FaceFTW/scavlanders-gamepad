@@ -1,0 +1,8 @@
+.jxbrowser-data/*
+.metadata/*
+dvt/*
+RemoteSystemsTempFiles/*
+/.metadata/
+/firmware/Debug/
+/firmware/.launches
+/TI_RTOS/Debug
