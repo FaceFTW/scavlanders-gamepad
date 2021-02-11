@@ -6,3 +6,5 @@ RemoteSystemsTempFiles/*
 /firmware/Debug/
 /firmware/.launches
 /TI_RTOS/Debug
+/driverlib_input_abstraction/Debug
+/driverlib_input_abstraction/.launches
