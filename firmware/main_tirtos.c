@@ -47,27 +47,26 @@
  */
 Display_Handle displayOut;
 
-int main(void)
-{
-    /* Call board initialization functions */
-    Power_init();
-    GPIO_init();
-    UART_init();
-    Timer_init();
+int main(void) {
+	/* Call board initialization functions */
+	Power_init();
+	GPIO_init();
+	UART_init();
+	Timer_init();
 
-    /* Open the display for output */
-    displayOut = Display_open(Display_Type_HOST | Display_Type_UART, NULL);
-    if (displayOut == NULL)
-    {
-        /* Failed to open display driver */
-        while (1);
-    }
+	/* Open the display for output */
+	displayOut = Display_open(Display_Type_HOST | Display_Type_UART, NULL);
+	if (displayOut == NULL) {
+		/* Failed to open display driver */
+		while (1)
+			;
+	}
 
-    /* Create main application processor task */
-    AP_createTask();
+	/* Create main application processor task */
+	AP_createTask();
 
-    /* enable interrupts and start SYS/BIOS */
-    BIOS_start();
-    
-    return 0;
+	/* enable interrupts and start SYS/BIOS */
+	BIOS_start();
+
+	return 0;
 }

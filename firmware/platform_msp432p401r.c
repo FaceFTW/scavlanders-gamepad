@@ -32,27 +32,24 @@
 #include "platform.h"
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 
-void MCU_rebootDevice(void)
-{
-    SysCtl_rebootDevice();
+void MCU_rebootDevice(void) {
+	SysCtl_rebootDevice();
 }
 
-uint32_t MCU_calculateCRC32(uint8_t* imageAddress, uint32_t imageLengthBytes)
-{
-    uint32_t ii;
-    uint32_t calculatedCRC;
-
-    /* From the start address, go over each byte and pipe it into the MSP432's
-     * CRC32 module.
-     */
-    MAP_CRC32_setSeed(0xFFFFFFFF, CRC32_MODE);
-
-    for (ii = 0; ii < imageLengthBytes; ii++)
-    {
-        MAP_CRC32_set8BitData(imageAddress[ii], CRC32_MODE);
-    }
-
-    calculatedCRC = MAP_CRC32_getResultReversed(CRC32_MODE) ^ 0xFFFFFFFF;
-
-    return calculatedCRC;
+uint32_t MCU_calculateCRC32(uint8_t *imageAddress, uint32_t imageLengthBytes) {
+	uint32_t ii;
+	uint32_t calculatedCRC;
+	
+	/* From the start address, go over each byte and pipe it into the MSP432's
+	 * CRC32 module.
+	 */
+	MAP_CRC32_setSeed(0xFFFFFFFF, CRC32_MODE);
+	
+	for (ii = 0; ii < imageLengthBytes; ii++) {
+		MAP_CRC32_set8BitData(imageAddress[ii], CRC32_MODE);
+	}
+	
+	calculatedCRC = MAP_CRC32_getResultReversed(CRC32_MODE) ^ 0xFFFFFFFF;
+	
+	return calculatedCRC;
 }

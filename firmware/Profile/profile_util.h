@@ -114,19 +114,16 @@ typedef void (*CharacteristicChangeCB_t)(uint8_t paramID);
 /* Callback when a cccd update request is received */
 typedef void (*CCCDUpdateCB_t)(uint8_t paramID, uint16_t value);
 
-typedef struct
-{
-    CharacteristicChangeCB_t charChangeCB;
-    CCCDUpdateCB_t cccdUpdateCB;
+typedef struct {
+		CharacteristicChangeCB_t charChangeCB;
+		CCCDUpdateCB_t cccdUpdateCB;
 } BLEProfileCallbacks_t;
 
 /*******************************************************************************
  *                                 FUNCTIONS
  ******************************************************************************/
-extern uint16_t ProfileUtil_getCharIDFromHdl(uint16_t charHdl,
-        SAP_CharHandle_t *serviceCharHandles, uint8_t numATTRSupported);
-extern uint16_t ProfileUtil_getHdlFromCharID(uint16_t charID,
-        SAP_CharHandle_t *serviceCharHandles, uint8_t numATTRSupported);
+extern uint16_t ProfileUtil_getCharIDFromHdl(uint16_t charHdl, SAP_CharHandle_t *serviceCharHandles, uint8_t numATTRSupported);
+extern uint16_t ProfileUtil_getHdlFromCharID(uint16_t charID, SAP_CharHandle_t *serviceCharHandles, uint8_t numATTRSupported);
 extern void ProfileUtil_convertBdAddr2Str(char *str, uint8_t *pAddr);
 
 #define PROFILE_UTIL_ADDR_LEN 6

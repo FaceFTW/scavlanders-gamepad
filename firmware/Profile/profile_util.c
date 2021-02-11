@@ -50,31 +50,24 @@
  *
  * @return  Success or Failure
  ******************************************************************************/
-uint16_t ProfileUtil_getCharIDFromHdl(uint16_t charHdl,
-        SAP_CharHandle_t *serviceCharHandles, uint8_t numATTRSupported)
-{
-    uint16_t ii;
+uint16_t ProfileUtil_getCharIDFromHdl(uint16_t charHdl, SAP_CharHandle_t *serviceCharHandles, uint8_t numATTRSupported) {
+	uint16_t ii;
 
-    /* Find Characteristic based on Handle */
-    for (ii = 0; ii < numATTRSupported; ii++)
-    {
-        /* Check if it is the charstick value handle or cccd handle */
-        if (serviceCharHandles[ii].valueHandle == charHdl)
-        {
-            return PROFILE_ID_CREATE(ii, PROFILE_VALUE);
-        } else if (serviceCharHandles[ii].userDescHandle == charHdl)
-        {
-            return PROFILE_ID_CREATE(ii, PROFILE_USERDESC);
-        } else if (serviceCharHandles[ii].cccdHandle == charHdl)
-        {
-            return PROFILE_ID_CREATE(ii, PROFILE_CCCD);
-        } else if (serviceCharHandles[ii].formatHandle == charHdl)
-        {
-            return PROFILE_ID_CREATE(ii, PROFILE_FORMAT);
-        }
-    }
+	/* Find Characteristic based on Handle */
+	for (ii = 0; ii < numATTRSupported; ii++) {
+		/* Check if it is the charstick value handle or cccd handle */
+		if (serviceCharHandles[ii].valueHandle == charHdl) {
+			return PROFILE_ID_CREATE(ii, PROFILE_VALUE);
+		} else if (serviceCharHandles[ii].userDescHandle == charHdl) {
+			return PROFILE_ID_CREATE(ii, PROFILE_USERDESC);
+		} else if (serviceCharHandles[ii].cccdHandle == charHdl) {
+			return PROFILE_ID_CREATE(ii, PROFILE_CCCD);
+		} else if (serviceCharHandles[ii].formatHandle == charHdl) {
+			return PROFILE_ID_CREATE(ii, PROFILE_FORMAT);
+		}
+	}
 
-    return PROFILE_UNKNOWN_CHAR;
+	return PROFILE_UNKNOWN_CHAR;
 }
 
 /*******************************************************************************
@@ -89,31 +82,27 @@ uint16_t ProfileUtil_getCharIDFromHdl(uint16_t charHdl,
  * @return  Success or Failure
  */
 /******************************************************************************/
-uint16_t ProfileUtil_getHdlFromCharID(uint16_t charID,
-        SAP_CharHandle_t *serviceCharHandles, uint8_t numATTRSupported)
-{
-    SAP_CharHandle_t charstick;
+uint16_t ProfileUtil_getHdlFromCharID(uint16_t charID, SAP_CharHandle_t *serviceCharHandles, uint8_t numATTRSupported) {
+	SAP_CharHandle_t charstick;
 
-    if (PROFILE_ID_CHAR(charID) < numATTRSupported)
-    {
-        charstick = serviceCharHandles[PROFILE_ID_CHAR(charID)];
+	if (PROFILE_ID_CHAR(charID) < numATTRSupported) {
+		charstick = serviceCharHandles[PROFILE_ID_CHAR(charID)];
 
-        switch (PROFILE_ID_CHARTYPE(charID))
-        {
-        case PROFILE_VALUE:
-            return charstick.valueHandle;
-        case PROFILE_USERDESC:
-            return charstick.userDescHandle;
-        case PROFILE_CCCD:
-            return charstick.cccdHandle;
-        case PROFILE_FORMAT:
-            return charstick.formatHandle;
-        default:
-            break;
-        }
-    }
+		switch (PROFILE_ID_CHARTYPE(charID)) {
+			case PROFILE_VALUE:
+				return charstick.valueHandle;
+			case PROFILE_USERDESC:
+				return charstick.userDescHandle;
+			case PROFILE_CCCD:
+				return charstick.cccdHandle;
+			case PROFILE_FORMAT:
+				return charstick.formatHandle;
+			default:
+				break;
+		}
+	}
 
-    return SNP_INVALID_HANDLE;
+	return SNP_INVALID_HANDLE;
 }
 
 /*******************************************************************************
@@ -126,19 +115,17 @@ uint16_t ProfileUtil_getHdlFromCharID(uint16_t charID,
  *
  * @return  BD address as a string
  ******************************************************************************/
-void ProfileUtil_convertBdAddr2Str(char *str, uint8_t *pAddr)
-{
-    uint8_t charCnt;
-    char hex[] = "0123456789ABCDEF";
+void ProfileUtil_convertBdAddr2Str(char *str, uint8_t *pAddr) {
+	uint8_t charCnt;
+	char hex[] = "0123456789ABCDEF";
 
-    /* Start from end of addr */
-    pAddr += PROFILE_UTIL_ADDR_LEN;
+	/* Start from end of addr */
+	pAddr += PROFILE_UTIL_ADDR_LEN;
 
-    for (charCnt = PROFILE_UTIL_ADDR_LEN; charCnt > 0; charCnt--)
-    {
-        *str++ = hex[*--pAddr >> 4];
-        *str++ = hex[*pAddr & 0x0F];
-    }
+	for (charCnt = PROFILE_UTIL_ADDR_LEN; charCnt > 0; charCnt--) {
+		*str++ = hex[*--pAddr >> 4];
+		*str++ = hex[*pAddr & 0x0F];
+	}
 
-    return;
+	return;
 }
