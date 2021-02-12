@@ -1,0 +1,9 @@
+
+I2C LCD instructions.
+https://github.com/johnrickman/LiquidCrystal_I2C/blob/master/LiquidCrystal_I2C.cpp
+https://github.com/fm4dd/i2c-lcd
+
+
+
+
+https://learn.adafruit.com/force-sensitive-resistor-fsr/using-an-fsr
