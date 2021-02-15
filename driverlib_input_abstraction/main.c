@@ -20,7 +20,7 @@
 #include "lib/button.h"										//Button Hardware Abstraction API
 #include "lib/joystick.h"									//2-axis Joystick Hardware Abstraction API
 #include "lib/lcd.h"										//LCD via I2C API
-#include "lib/led_matrix.h"									//LED Matrix Hardware Abstraction API
+// #include "lib/led_matrix.h"									//LED Matrix Hardware Abstraction API
 
 
 

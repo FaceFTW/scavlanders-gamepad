@@ -27,7 +27,7 @@ void init_button(){
 }
 
 void get_button(){
-    States states = A;
+    States states = null;
     if(GPIO_getInputPinValue(botton_A)){
        //print in the console
         states = A;
@@ -76,6 +76,43 @@ void get_button(){
 
 }
 void print_botton(States states){
+    if(states == null){
+        printf();
+    }
+    else if (states == A){
+        printf();
+    }
+    else if(states == B){
+        printf();
+    }
+    else if(states == X){
+            printf();
+        }
+    else if(states == Y){
+            printf();
+        }
+    else if(states == U){
+            printf();
+        }
+    else if(states == D){
+            printf();
+        }
+    else if(states == R){
+            printf();
+        }
+    else if(states == L){
+            printf();
+        }
+    else if(states == P){
+            printf();
+        }
+    else if(states == Sel){
+            printf();
+        }
+    else if(states == Start){
+            printf();
+        }
+
 
 }
 

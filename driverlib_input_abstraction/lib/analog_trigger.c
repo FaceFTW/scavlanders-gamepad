@@ -24,6 +24,8 @@ void read_FR (){
 
 void print_FR(){
     //todo print to the console
+    printf();   //fource button1 and button1
+
 }
 
 

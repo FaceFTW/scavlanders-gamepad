@@ -7,6 +7,8 @@
  ***********************************************************************/
 #include "joystick.h"
 #include"ti/devices/msp432p4xx/driverlib/driverlib.h"
+static volatile x_value;
+static volatile y_value;
 
 /***********************************************************************
  * 							FUNCTION DECLARATIONS					   *
@@ -17,18 +19,15 @@ void init_joy(){
 
 }
 
-void x_value_detect(){
+void xy_value_detect(){
 
 }
 
-void y_value_detect(){
 
-}
 
-void x_value_print(){
+void xy_value_print(){
     //todo print to the console
+    printf();
+
 }
 
-void y_value_print(){
-    // todo print to the console
-}

@@ -39,6 +39,7 @@ typedef enum _States{
     P,              // 0x08 == P button
     Sel,            // 0x09 == select button
     Start,          // 0x0A == start button
+    null,           // 0x0B == no button pressed
 }States;
 
 /***********************************************************************
