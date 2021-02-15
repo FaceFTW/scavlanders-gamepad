@@ -20,6 +20,8 @@ void init_joy(){
 }
 
 void xy_value_detect(){
+    x_value = GPIO_getInputPinValue();
+    y_value = GPIO_getInputPinValue();
 
 }
 
@@ -27,7 +29,7 @@ void xy_value_detect(){
 
 void xy_value_print(){
     //todo print to the console
-    printf();
+    printf("x value is", x_value,"y value is" , y_value);
 
 }
 

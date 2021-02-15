@@ -22,6 +22,10 @@
  * 							FUNCTION PROTOTYPES						   *
 ***********************************************************************/
 
+extern void init_FR(void);
 
+extern void read_FR(void);
+
+extern void print_FR(void);
 
 #endif /* LIB_ANALOG_TRIGGER_H_ */
