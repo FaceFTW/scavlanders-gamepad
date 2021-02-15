@@ -7,3 +7,12 @@ https://www.youtube.com/watch?v=q9YC_GVHy5A // youtube i2c tutorial
 
 
 https://learn.adafruit.com/force-sensitive-resistor-fsr/using-an-fsr
+
+
+HID Information
+https://eleccelerator.com/tutorial-about-usb-hid-report-descriptors/
+https://dzone.com/articles/build-your-own-usb-hid-joystick-device-and-game-co
+https://www.usb.org/hid
+https://github.com/ti-simplelink/ble_examples/tree/ble_examples-2.2 - HIDEMUKBD example
+TI-RTOS Kernel (SYS/BIOS) User Guide (Lit Num: SPRUEX3V, Date: 6/2020)
+https://www.usbmadesimple.co.uk/
