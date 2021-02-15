@@ -8,3 +8,4 @@ RemoteSystemsTempFiles/*
 /TI_RTOS/Debug
 /driverlib_input_abstraction/Debug
 /driverlib_input_abstraction/.launches
+TI_RTOS/src/makefile.libs

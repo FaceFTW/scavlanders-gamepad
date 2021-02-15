@@ -2,7 +2,7 @@
 I2C LCD instructions.
 https://github.com/johnrickman/LiquidCrystal_I2C/blob/master/LiquidCrystal_I2C.cpp
 https://github.com/fm4dd/i2c-lcd
-
+https://www.youtube.com/watch?v=q9YC_GVHy5A // youtube i2c tutorial
 
 
 
