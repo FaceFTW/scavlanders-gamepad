@@ -26,12 +26,11 @@
 ***********************************************************************/
 void init_joy(void);
 
-void x_value_detect(void);
+void xy_value_detect(void);
 
-void y_value_detect(void);
 
-void x_value_print(void);
+void xy_value_print(void);
 
-void y_value_print(void);
+
 
 #endif /* LIB_JOYSTICK_H_ */
