@@ -1,55 +1,31 @@
-/* --COPYRIGHT--,BSD
- * Copyright (c) 2017, Texas Instruments Incorporated
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * *  Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * *  Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * *  Neither the name of Texas Instruments Incorporated nor the names of
- *    its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * --/COPYRIGHT--*/
+/***********************************************************************
+ * \file 		simple_application_processor.c
+ * \author 		Texas Instruments
+ * \author 		Alex Westerman
+ * \brief 		Main code defining Bluetooth States and Behavior
+ * \copyright 	See LICENSE_TI and LICENSE
+ ***********************************************************************/
 
-/* Standard Includes */
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <pthread.h>
-#include <mqueue.h>
-#include <semaphore.h>
-#include <time.h>
-#include <unistd.h>
+/***********************************************************************
+ * 								INCLUDES
+***********************************************************************/
+#include <string.h>								//Standard C Strings Library
+#include <stdlib.h>								//Standard C Library
+#include <stdbool.h>							//Standard C Boolean Library
+#include <pthread.h>							//TI RTOS Threading Library
+#include <mqueue.h>								//TI RTOS Message Queue Library
+#include <semaphore.h>							//TI RTOS Semaphore Library
+#include <time.h>								//TI RTOS Time Library
+#include <unistd.h>								//Standard C Misc. Library
 
-/* TI-Driver Includes */
-#include <ti/drivers/GPIO.h>
-#include <ti/drivers/UART.h>
-#include <ti/drivers/Timer.h>
-#include <ti/display/Display.h>
+#include <ti/drivers/GPIO.h>					//TI RTOS GPIO Library
+#include <ti/drivers/UART.h>					//TI RTOS UART Library
+#include <ti/drivers/Timer.h>					//TI RTOS Timer Library
+#include <ti/display/Display.h>					//TI RTOS Display Library
 
-/* SAP/DriverLib Includes */
-#include <ti/sap/sap.h>
-#include <ti/sbl/sbl.h>
-#include <ti/sbl/sbl_image.h>
+#include <ti/sap/sap.h>							//TI Simple Application Proessor (SAP) Library
+#include <ti/sbl/sbl.h>							//TI Serial BootLoader (SBL) Library
+#include <ti/sbl/sbl_image.h>					//TI SBL Image Binary Definition
 
 /* Local Includes */
 #include "simple_application_processor.h"
@@ -57,30 +33,33 @@
 #include "Board.h"
 #include "platform.h"
 
-/* Used to pass messages between callbacks and the task */
+/***********************************************************************
+ * 						 VARIABLE DECLARATIONS
+***********************************************************************/
+//Message Queue Vars
 static mqd_t apQueueRec;
 static mqd_t apQueueSend;
 static sem_t notifySem;
 
-/* Used for log messages */
+//Debugging Log Stream
 extern Display_Handle displayOut;
 
-/* Clock instances for internal periodic events. */
+//Thread-safe Timer Object
 static Timer_Handle timer0;
 
-/* Task configuration */
+//Task Configurations
 static pthread_t apTask;
 static pthread_t notifyTask;
 
 /* SAP Parameters for opening serial port to SNP */
 static SAP_Params sapParams;
-static uint8_t snpDeviceName[] = { 'S', 'i', 'm', 'p', 'l', 'e', ' ', 'A', 'P' };
+static uint8_t snpDeviceName[] = { 'S','c','a','v','l','a','n','d','e','r','\'','s',' ','G','a','m','e','p','a','d'};
 
 /* GAP - SCAN RSP data (max size = 31 bytes) */
 static uint8_t scanRspData[] = {
 /* Complete Name */
-0xb,/* length of this data */
-SAP_GAP_ADTYPE_LOCAL_NAME_COMPLETE, 'M', 'S', 'P', '4', '3', '2', ' ', 'S', 'A', 'P',
+0x14,/* length of this data */
+SAP_GAP_ADTYPE_LOCAL_NAME_COMPLETE, 'S','c','a','v','l','a','n','d','e','r','\'','s',' ','G','a','m','e','p','a','d',
 
 /* Connection interval range */
 0x05, /* length of this data */
@@ -90,8 +69,7 @@ LO_UINT16(DEFAULT_DESIRED_MIN_CONN_INTERVAL), HI_UINT16(DEFAULT_DESIRED_MIN_CONN
 0 /* 0dBm */
 };
 
-/* GAP - Advertisement data (max size = 31 bytes, though this is
- best kept short to conserve power while advertisting) */
+/**GAP Advertising Data Struct**/
 static uint8_t advertData[] = {
 /* Flags; this sets the device to use limited discoverable
  mode (advertises for 30 seconds at a time) instead of general
