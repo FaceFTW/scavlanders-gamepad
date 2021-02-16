@@ -13,18 +13,19 @@
 /***********************************************************************
  * 						    INCLUDE DELCARATIONS					   *
 ***********************************************************************/
-#define botton_port                                     // todo find the GPIO port for the IO port.
-#define botton_A
-#define botton_B                                        // todo find the GPIO port for the IO pin
-#define botton_X
-#define botton_Y
-#define botton_U
-#define botton_D
-#define botton_R
-#define botton_L
-#define botton_P
-#define botton_Sel
-#define botton_Start
+#define botton_port1            GPIO_PORT_P4                        // todo find the GPIO port for the IO port.
+#define botton_A                GPIO_PIN0
+#define botton_B                GPIO_PIN1                        // todo find the GPIO port for the IO pin
+#define botton_X                GPIO_PIN2
+#define botton_Y                GPIO_PIN3
+#define botton_U                GPIO_PIN4
+#define botton_D                GPIO_PIN5
+#define botton_R                GPIO_PIN6
+#define botton_L                GPIO_PIN7
+#define botton_port2            GPIO_PORT_P5
+#define botton_P                GPIO_PIN0
+#define botton_Sel              GPIO_PIN1
+#define botton_Start            GPIO_PIN2
 #define button_all              0x0007
 
 typedef enum _States{
@@ -53,6 +54,6 @@ extern void init_botton(void);
 
 extern void get_button(void);
 
-extern void print_button(States states);
+
 
 #endif /* LIB_BUTTON_H_ */

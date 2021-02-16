@@ -12,9 +12,14 @@
  * 						    INCLUDE DELCARATIONS					   *
 ***********************************************************************/
 
-#define J_x                                                     // todo gpio analog input
-#define J_y                                                     //
-
+#define J_x1_port                                                     GPIO_PORT_P4
+#define J_x1_pin                                                      GPIO_PIN2
+#define J_y1_port                                                     GPIO_PORT_P4
+#define J_y1_pin                                                      GPIO_PIN4
+#define J_x2_port                                                     GPIO_PORT_P4
+#define J_x2_pin                                                      GPIO_PIN5
+#define J_y2_port                                                     GPIO_PORT_P4
+#define J_y2_pin                                                      GPIO_PIN7
 
 
 /***********************************************************************

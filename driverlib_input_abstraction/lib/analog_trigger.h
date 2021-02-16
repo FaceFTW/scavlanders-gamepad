@@ -11,8 +11,10 @@
 /***********************************************************************
  * 						    INCLUDE DELCARATIONS					   *
 ***********************************************************************/
-#define fource_input_1          // todo
-#define fource_input_2          // todo GPIO Analog input port
+#define fource_input_1_port             GPIO_PORT_P6// todo
+#define fource_input_1_pin              GPIO_PIN1
+#define fource_input_2_port             GPIO_PORT_P4          // todo GPIO Analog input port
+#define fource_input_2_pin              GPIO_PIN0
 
 /***********************************************************************
  * 						PREPROCESSOR MACROS/DEFINES					   *
