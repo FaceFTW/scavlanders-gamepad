@@ -8,7 +8,7 @@
 
 /***********************************************************************
  * 								INCLUDES
-***********************************************************************/
+ ***********************************************************************/
 #include <string.h>								//Standard C Strings Library
 #include <stdlib.h>								//Standard C Library
 #include <stdbool.h>							//Standard C Boolean Library
@@ -35,7 +35,7 @@
 
 /***********************************************************************
  * 						 VARIABLE DECLARATIONS
-***********************************************************************/
+ ***********************************************************************/
 //Message Queue Vars
 static mqd_t apQueueRec;
 static mqd_t apQueueSend;
@@ -53,13 +53,13 @@ static pthread_t notifyTask;
 
 /* SAP Parameters for opening serial port to SNP */
 static SAP_Params sapParams;
-static uint8_t snpDeviceName[] = { 'S','c','a','v','l','a','n','d','e','r','\'','s',' ','G','a','m','e','p','a','d'};
+static uint8_t snpDeviceName[] = { 'S', 'c', 'a', 'v', 'l', 'a', 'n', 'd', 'e', 'r', 's', ' ', 'G', 'a', 'm', 'e', 'p', 'a', 'd' };
 
 /* GAP - SCAN RSP data (max size = 31 bytes) */
 static uint8_t scanRspData[] = {
 /* Complete Name */
-0x14,/* length of this data */
-SAP_GAP_ADTYPE_LOCAL_NAME_COMPLETE, 'S','c','a','v','l','a','n','d','e','r','\'','s',' ','G','a','m','e','p','a','d',
+0x13,/* length of this data */
+SAP_GAP_ADTYPE_LOCAL_NAME_COMPLETE, 'S', 'c', 'a', 'v', 'l', 'a', 'n', 'd', 'e', 'r', 's', ' ', 'G', 'a', 'm', 'e', 'p', 'a', 'd',
 
 /* Connection interval range */
 0x05, /* length of this data */
