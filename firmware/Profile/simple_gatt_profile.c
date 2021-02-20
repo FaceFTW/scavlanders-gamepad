@@ -88,7 +88,7 @@ SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar2UserDesp), sizeof(simpleProfileCh
 SAP_UserDescAttr_t char3UserDesc = {
 SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar3UserDesp), sizeof(simpleProfileChar3UserDesp), simpleProfileChar3UserDesp };
 
-SAP_UserDescAttr_t char4UserDesc = {
+SAP_UserDescAttr_t char4UsesrDesc = {
 SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar4UserDesp), sizeof(simpleProfileChar4UserDesp), simpleProfileChar4UserDesp };
 
 SAP_UserCCCDAttr_t char4CCCD = {

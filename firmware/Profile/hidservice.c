@@ -17,29 +17,7 @@
 #include "profile_util.h"
 #include "bt_uuid.h"
 #include "constants.h"
-/*********************************************************************
- * MACROS
- */
 
-/*********************************************************************
- * CONSTANTS
- */
-
-/*********************************************************************
- * TYPEDEFS
- */
-
-/*********************************************************************
- * GLOBAL VARIABLES
- */
-
-//RTOS related Variables
-static Semaphore_Handle serviceHandle;		//
-static Queue_Handle serviceQueue;			//Queue Object for service Messages
-static Queue_Struct serviceMsg;				//Queue Structure for Service Messages
-
-static Clock_Struct battPerClock;			//Clock used for Battery Service (For conformance)
-static Clock_Struct idleTimeoutClock;		//Clock used for timeout checks
 
 // HID report map length
 uint8_t hidReportMapLen = sizeof(hidReportMap);
@@ -51,36 +29,16 @@ static hidRptMap_t hidRptMap[HID_NUM_REPORTS];
  * Profile Attributes - variables
  */
 
-SAP_Service_t simpleService;
-SAP_CharHandle_t simpleServiceCharHandles[4];
+SAP_Service_t hidService;
+SAP_CharHandle_t hidServiceCharHandles[4];
 
-static UUIDType_t simpleServiceUUID = {SNP_16BIT_UUID_SIZE, simpleProfileServUUID};
 
-/* Characteristic 1 Value */
-static uint8_t simpleProfileChar1 = 0;
-static uint8_t simpleProfileChar1UserDesp[17] = "Characteristic 1";
-
-/* Characteristic 2 Value */
-static uint8_t simpleProfileChar2 = 0;
-
-/* Simple Profile Characteristic 2 User Description */
-static uint8_t simpleProfileChar2UserDesp[17] = "Characteristic 2";
-
-/* Characteristic 3 Value */
-static uint8_t simpleProfileChar3 = 0;
-
-/* Simple Profile Characteristic 3 User Description */
-static uint8_t simpleProfileChar3UserDesp[17] = "Characteristic 3";
-
-/* Characteristic 4 Value */
-static uint8_t simpleProfileChar4 = 0;
-
-/* Simple Profile Characteristic 4 User Description */
-static uint8_t simpleProfileChar4UserDesp[17] = "Characteristic 4";
 
 /*******************************************************************************
  *                              Profile Attributes - TABLE
  ******************************************************************************/
+
+
 SAP_UserDescAttr_t char1UserDesc = {SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar1UserDesp), sizeof(simpleProfileChar1UserDesp), simpleProfileChar1UserDesp};
 
 SAP_UserDescAttr_t char2UserDesc = {SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar2UserDesp), sizeof(simpleProfileChar2UserDesp), simpleProfileChar2UserDesp};
@@ -100,28 +58,7 @@ SNP_GATT_PROP_READ | SNP_GATT_PROP_WRITE, /* Properties */
 SNP_GATT_PERMIT_READ | SNP_GATT_PERMIT_WRITE, /* Permissions */
 &char1UserDesc /* User Description */
 },
-
-/* Characteristic 2 Value Declaration */
-{{SNP_16BIT_UUID_SIZE, simpleProfilechar2UUID}, /* UUID */
-SNP_GATT_PROP_READ, /* Properties */
-SNP_GATT_PERMIT_READ, /* Permissions */
-&char2UserDesc /* User Description */
-},
-
-/* Characteristic 3 Value Declaration */
-{{SNP_16BIT_UUID_SIZE, simpleProfilechar3UUID}, /* UUID */
-SNP_GATT_PROP_WRITE, /* Properties */
-SNP_GATT_PERMIT_WRITE, /* Permissions */
-&char3UserDesc /* User Description */
-},
-
-/* Characteristic 4 Value Declaration */
-{{SNP_16BIT_UUID_SIZE, simpleProfilechar4UUID}, /* UUID */
-SNP_GATT_PROP_NOTIFICATION, /* Properties */
-0, /* Permissions */
-&char4UserDesc, /* User Description */
-&char4CCCD /* CCCD */
-}, };
+ };
 /*********************************************************************
  * Profile Attributes - Table
  */
@@ -277,31 +214,11 @@ enum {
 	HID_REPORT_REF_VOICE_DATA_IDX,  // HID Report Reference characteristic descriptor, Voice Start
 };
 
-static gapRolesCBs_t hidDev_PeripheralCBs = {HidDev_stateChangeCB  // Profile State Change Callbacks
-		};
 
-// Bond Manager Callbacks
-static const gapBondCBs_t hidDevBondCB = {(pfnPasscodeCB_t) HidDev_passcodeCB, HidDev_pairStateCB};
 Task_Struct hidDeviceTask;
 Char hidDeviceTaskStack[HIDDEVICE_TASK_STACK_SIZE];
 
-// GAP State
-static gaprole_States_t hidDevGapState = GAPROLE_INIT;
 
-// TRUE if connection is secure
-static uint8_t hidDevConnSecure = FALSE;
-
-// GAP connection handle
-static uint16_t gapConnHandle;
-
-// TRUE if pairing in progress
-static uint8_t hidDevPairingStarted = FALSE;
-
-// Status of last pairing
-static uint8_t pairingStatus = SUCCESS;
-
-// Pairing state
-static uint8_t hidDevGapBondPairingState = HID_GAPBOND_PAIRING_STATE_NONE;
 
 static hidRptMap_t *pHidDevRptTbl;
 
@@ -310,9 +227,6 @@ static uint8_t hidDevRptTblLen;
 static hidDevCB_t *pHidDevCB;
 
 static hidDevCfg_t *pHidDevCfg;
-
-// Whether to change to the preferred connection parameters
-static uint8_t updateConnParams = TRUE;
 
 // Pending reports
 static uint8_t firstQIdx = 0;
@@ -334,15 +248,10 @@ static Clock_Struct reportReadyClock;
 
 // Task events and processing functions.
 static void HidDev_init(void);
-static void HidDev_taskFxn(UArg a0, UArg a1);
+
 static void HidDev_processStackMsg(eventHdr_t *pMsg);
 static void HidDev_processAppMsg(hidDevEvt_t *pMsg);
 static void HidDev_processGattMsg(gattMsgEvent_t *pMsg);
-static void HidDev_disconnected(void);
-static void HidDev_highAdvertising(void);
-static void HidDev_lowAdvertising(void);
-static void HidDev_initialAdvertising(void);
-static uint8_t HidDev_bondCount(void);
 static void HidDev_clockHandler(UArg arg);
 static uint8_t HidDev_enqueueMsg(uint16_t event, uint8_t state, uint8_t *pData);
 
@@ -379,41 +288,7 @@ static void HidDev_scanParamCB(uint8_t event);
 // Process reconnection delay
 static void HidDev_reportReadyClockCB(UArg a0);
 
-// Voice
-static uint8_t HidDev_sendVoiceReport(uint8_t id, uint8_t type, uint8_t len, uint8_t *pData);
 
-
-/* SAP Parameters for opening serial port to SNP */
-static SAP_Params sapParams;
-static uint8_t snpDeviceName[] = {'S', 'c', 'a', 'v', 'l', 'a', 'n', 'd', 'e', 'r', 's', ' ', 'G', 'a', 'm', 'e', 'p', 'a', 'd'};
-
-/* GAP - SCAN RSP data (max size = 31 bytes) */
-static uint8_t scanRspData[] = {
-/* Complete Name */
-0x13,/* length of this data */
-SAP_GAP_ADTYPE_LOCAL_NAME_COMPLETE, 'S', 'c', 'a', 'v', 'l', 'a', 'n', 'd', 'e', 'r', 's', ' ', 'G', 'a', 'm', 'e', 'p', 'a', 'd',
-
-/* Connection interval range */
-0x05, /* length of this data */
-0x12, /* GAP_ADTYPE_SLAVE_CONN_INTERVAL_RANGE, */
-LO_UINT16(DEFAULT_DESIRED_MIN_CONN_INTERVAL), HI_UINT16(DEFAULT_DESIRED_MIN_CONN_INTERVAL), LO_UINT16(DEFAULT_DESIRED_MAX_CONN_INTERVAL), HI_UINT16(DEFAULT_DESIRED_MAX_CONN_INTERVAL), 0x02, /* length of this data */
-0x0A, /* GAP_ADTYPE_POWER_LEVEL, */
-0 /* 0dBm */
-};
-
-/**GAP Advertising Data Struct**/
-static uint8_t advertData[] = {
-/* Flags; this sets the device to use limited discoverable
- mode (advertises for 30 seconds at a time) instead of general
- discoverable mode (advertises indefinitely) */
-0x02, /* length of this data */
-SAP_GAP_ADTYPE_FLAGS, DEFAULT_DISCOVERABLE_MODE | SAP_GAP_ADTYPE_FLAGS_BREDR_NOT_SUPPORTED,
-
-/* Manufacturer specific advertising data */
-0x06, 0xFF, LO_UINT16(TI_COMPANY_ID), HI_UINT16(TI_COMPANY_ID),
-TI_ST_DEVICE_ID,
-TI_ST_KEY_DATA_ID, 0x00 /* Key state */
-};
 /***********************************************************************
  * 					UTILITY FUNCTIONS
  ***********************************************************************/
@@ -595,24 +470,6 @@ static void HidDev_taskFxn(UArg a0, UArg a1) {
 	}
 }
 
-/*********************************************************************
- * @fn      HidDev_StartDevice
- *
- * @brief   Start the GAP Role and Register the Bond Manager.
- *          This function is intended to be called from the application
- *          task after setting up the GAP Role and Bond Manager.
- *
- * @param   None.
- *
- * @return  None.
- */
-void HidDev_StartDevice(void) {
-	// Start the Device.
-	void GAPRole_StartDevice(&hidDev_PeripheralCBs);
-
-	// Register with bond manager after starting device.
-	GAPBondMgr_Register((gapBondCBs_t*) &hidDevBondCB);
-}
 
 /*********************************************************************
  * @fn      HidDev_Register
@@ -705,179 +562,7 @@ static void HidDev_processGattMsg(gattMsgEvent_t *pMsg) {
 	GATT_bm_free(&pMsg->msg, pMsg->method);
 }
 
-/*********************************************************************
- * @fn      HidDev_stateChangeCB
- *
- * @brief   Notification from the profile of a state change.
- *
- * @param   newState - new state
- *
- * @return  none
- */
-static void HidDev_stateChangeCB(gaprole_States_t newState) {
-	// Enqueue the message.
-	HidDev_enqueueMsg(HID_STATE_CHANGE_EVT, newState, NULL);
-}
 
-/*********************************************************************
- * @fn      HidDev_processStateChangeEvt
- *
- * @brief   Notification from the profile of a state change.
- *
- * @param   newState - new state
- *
- * @return  none
- */
-static void HidDev_processStateChangeEvt(gaprole_States_t newState) {
-	// If connected
-	if (newState == GAPROLE_CONNECTED) {
-		uint8_t param = FALSE;
-
-		// Get connection handle.
-		GAPRole_GetParameter(GAPROLE_CONNHANDLE, &gapConnHandle);
-
-		// Connection not secure yet.
-		hidDevConnSecure = FALSE;
-
-		// Don't start advertising when connection is closed.
-		GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8_t), &param);
-
-		// Start idle timer.
-		HidDev_StartIdleTimer();
-
-		// If there are reports in the queue
-		if (!reportQEmpty()) {
-			Event_post(syncEvent, HID_SEND_REPORT_EVT);
-		}
-	}
-	// If disconnected
-	else if (hidDevGapState == GAPROLE_CONNECTED && newState != GAPROLE_CONNECTED) {
-		HidDev_disconnected();
-
-		updateConnParams = TRUE;
-
-		if (pairingStatus == SMP_PAIRING_FAILED_CONFIRM_VALUE) {
-			// Bonding failed due to mismatched confirm values.
-			HidDev_initialAdvertising();
-
-			pairingStatus = SUCCESS;
-		}
-#if AUTO_ADV
-		else {
-			uint8_t advState = TRUE;
-
-			GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8_t), &advState);
-		}
-#endif//AUTO_ADV
-	}
-	// If started
-	else if (newState == GAPROLE_STARTED) {
-		// Nothing to do for now!
-	}
-
-	// Update GAP state
-	hidDevGapState = newState;
-
-	// Notify application
-	(*pHidDevCB->evtCB)(HID_DEV_GAPROLE_STATE_CHANGE_EVT);
-}
-
-/*********************************************************************
- * @fn      HidDev_disconnected
- *
- * @brief   Handle disconnect.
- *
- * @return  none
- */
-static void HidDev_disconnected(void) {
-	// Stop idle timer.
-	HidDev_StopIdleTimer();
-
-	// Reset state variables.
-	hidDevConnSecure = FALSE;
-	hidProtocolMode = HID_PROTOCOL_MODE_REPORT;
-	hidDevPairingStarted = FALSE;
-	hidDevGapBondPairingState = HID_GAPBOND_PAIRING_STATE_NONE;
-
-	// Reset last report sent out
-	memset(&lastReport, 0, sizeof(hidDevReport_t));
-
-	// If bonded and normally connectable start advertising.
-	if ((HidDev_bondCount() > 0) && (pHidDevCfg->hidFlags & HID_FLAGS_NORMALLY_CONNECTABLE)) {
-		HidDev_lowAdvertising();
-	}
-
-	// Notify application
-	(*pHidDevCB->evtCB)(HID_DEV_GAPBOND_STATE_CHANGE_EVT);
-}
-
-/*********************************************************************
- * @fn      HidDev_pairStateCB
- *
- * @brief   Pairing state callback.
- *
- * @param   connHandle - connection handle.
- * @param   state      - pairing state
- * @param   status     - status upon entering this state.
- *
- * @return  none
- */
-static void HidDev_pairStateCB(uint16_t connHandle, uint8_t state, uint8_t status) {
-	uint8_t *pData;
-
-	// Allocate message data
-	if ((pData = malloc(sizeof(uint8_t)))) {
-		*pData = status;
-
-		// Queue the event.
-		HidDev_enqueueMsg(HID_PAIR_STATE_EVT, state, pData);
-	}
-}
-
-/*********************************************************************
- * @fn      HidDev_processPairStateEvt
- *
- * @brief   Process pairing state callback.
- *
- * @param   state  - pairing state
- * @param   status - status upon entering this state.
- *
- * @return  none
- */
-static void HidDev_processPairStateEvt(uint8_t state, uint8_t status) {
-	if (state == GAPBOND_PAIRING_STATE_STARTED) {
-		hidDevPairingStarted = TRUE;
-	} else if (state == GAPBOND_PAIRING_STATE_COMPLETE) {
-		hidDevPairingStarted = FALSE;
-		pairingStatus = status;
-
-		if (status == SUCCESS) {
-			hidDevConnSecure = TRUE;
-			Util_restartClock(&reportReadyClock, HID_REPORT_READY_TIME);
-		}
-	} else if (state == GAPBOND_PAIRING_STATE_BONDED) {
-		if (status == SUCCESS) {
-			hidDevConnSecure = TRUE;
-			Util_restartClock(&reportReadyClock, HID_REPORT_READY_TIME);
-
-#if DEFAULT_SCAN_PARAM_NOTIFY_TEST == TRUE
-			ScanParam_RefreshNotify(gapConnHandle);
-#endif
-		}
-	}
-
-	// Update GAP Bond pairing state
-	hidDevGapBondPairingState = state;
-
-	// Notify application
-	(*pHidDevCB->evtCB)(HID_DEV_GAPBOND_STATE_CHANGE_EVT);
-
-	// Process HID reports
-	if (!reportQEmpty() && hidDevConnSecure) {
-		// Notify our task to send out pending reports.
-		Event_post(syncEvent, HID_SEND_REPORT_EVT);
-	}
-}
 
 /*********************************************************************
  * @fn      HidDev_passcodeCB
@@ -1114,42 +799,7 @@ static void HidDev_sendReport(uint8_t id, uint8_t type, uint8_t len, uint8_t *pD
 	}
 }
 
-/*********************************************************************
- * @fn      HidDev_sendVoiceReport
- *
- * @brief   Send a HID report.
- *
- * @param   id    - HID report ID.
- * @param   type  - HID report type.
- * @param   len   - Length of report.
- * @param   pData - Report data.
- *
- * @return  status.
- */
-static uint8_t HidDev_sendVoiceReport(uint8_t id, uint8_t type, uint8_t len, uint8_t *pData) {
-	hidRptMap_t *pRpt;
 
-	// Get ATT handle for report.
-	if ((pRpt = HidDev_reportById(id, type)) != NULL) {
-		uint8_t value = GATTServApp_ReadCharCfg(gapConnHandle, GATT_CCC_TBL(pRpt->pCccdAttr->pValue));
-
-		// If notifications are enabled
-		if (value & GATT_CLIENT_CFG_NOTIFY) {
-			// After service discovery and encryption, the HID Device should
-			// request to change to the preferred connection parameters that best
-			// suit its use case.
-			if (updateConnParams) {
-				GAPRole_SetParameter(GAPROLE_PARAM_UPDATE_REQ, sizeof(uint8_t), &updateConnParams);
-
-				updateConnParams = FALSE;
-			}
-
-			// Send report notification
-			return HidDev_sendNoti(pRpt->handle, len, pData);
-		}
-	}
-	return FAILURE;
-}
 
 /*********************************************************************
  * @fn      hidDevSendNoti
@@ -1243,107 +893,6 @@ static hidDevReport_t* HidDev_dequeueReport(void) {
 	return (&(hidDevReportQ[firstQIdx]));
 }
 
-/*********************************************************************
- * @fn      HidDev_highAdvertising
- *
- * @brief   Start advertising at a high duty cycle.
-
- * @param   None.
- *
- * @return  None.
- */
-static void HidDev_highAdvertising(void) {
-	uint8_t param;
-
-	void GAP_SetParamValue(TGAP_LIM_DISC_ADV_INT_MIN, HID_HIGH_ADV_INT_MIN);
-	void GAP_SetParamValue(TGAP_LIM_DISC_ADV_INT_MAX, HID_HIGH_ADV_INT_MAX);
-	void GAP_SetParamValue(TGAP_LIM_ADV_TIMEOUT, HID_HIGH_ADV_TIMEOUT);
-
-	// Setup advertising filter policy first.
-	param = HID_AUTO_SYNC_WL ? GAP_FILTER_POLICY_WHITE : GAP_FILTER_POLICY_ALL;
-	void GAPRole_SetParameter(GAPROLE_ADV_FILTER_POLICY, sizeof(uint8_t), &param);
-
-	param = TRUE;
-	GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8_t), &param);
-}
-
-/*********************************************************************
- * @fn      HidDev_lowAdvertising
- *
- * @brief   Start advertising at a low duty cycle.
- *
- * @param   None.
- *
- * @return  None.
- */
-static void HidDev_lowAdvertising(void) {
-	uint8_t param;
-
-	void GAP_SetParamValue(TGAP_LIM_DISC_ADV_INT_MIN, HID_LOW_ADV_INT_MIN);
-	void GAP_SetParamValue(TGAP_LIM_DISC_ADV_INT_MAX, HID_LOW_ADV_INT_MAX);
-	void GAP_SetParamValue(TGAP_LIM_ADV_TIMEOUT, HID_LOW_ADV_TIMEOUT);
-
-	// Setup advertising filter policy first.
-	param = HID_AUTO_SYNC_WL ? GAP_FILTER_POLICY_WHITE : GAP_FILTER_POLICY_ALL;
-	void GAPRole_SetParameter(GAPROLE_ADV_FILTER_POLICY, sizeof(uint8_t), &param);
-
-	param = TRUE;
-	void GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8_t), &param);
-}
-
-/*********************************************************************
- * @fn      HidDev_initialAdvertising
- *
- * @brief   Start advertising for initial connection.
- *
- * @return  None.
- */
-static void HidDev_initialAdvertising(void) {
-	uint8_t param;
-
-	Display_print0(displayOut, 0, 0, "Starting advertisement... ");
-
-	/* Setting Advertising Name */
-	SAP_setServiceParam(SNP_GGS_SERV_ID, SNP_GGS_DEVICE_NAME_ATT, sizeof(snpDeviceName), snpDeviceName);
-
-	/* Set advertising data. */
-	SAP_setParam(SAP_PARAM_ADV, SAP_ADV_DATA_NOTCONN, sizeof(advertData), advertData);
-
-	/* Set scan response data. */
-	SAP_setParam(SAP_PARAM_ADV, SAP_ADV_DATA_SCANRSP, sizeof(scanRspData), scanRspData);
-
-	/* Enable Advertising and await NP response */
-	SAP_setParam(SAP_PARAM_ADV, SAP_ADV_STATE, 1, &enableAdv);
-
-
-	void GAP_SetParamValue(TGAP_LIM_DISC_ADV_INT_MIN, HID_INITIAL_ADV_INT_MIN);
-	void GAP_SetParamValue(TGAP_LIM_DISC_ADV_INT_MAX, HID_INITIAL_ADV_INT_MAX);
-	void GAP_SetParamValue(TGAP_LIM_ADV_TIMEOUT, HID_INITIAL_ADV_TIMEOUT);
-
-	// Setup advertising filter policy first.
-	param = GAP_FILTER_POLICY_ALL;
-	void GAPRole_SetParameter(GAPROLE_ADV_FILTER_POLICY, sizeof(uint8_t), &param);
-
-	params = TRUE;
-	void GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8_t), &param);
-}
-
-/*********************************************************************
- * @fn      HidDev_bondCount
- *
- * @brief   Gets the total number of bonded devices.
- *
- * @param   None.
- *
- * @return  number of bonded devices.
- */
-static uint8_t HidDev_bondCount(void) {
-	uint8_t bondCnt = 0;
-
-	void GAPBondMgr_GetParameter(GAPBOND_BOND_COUNT, &bondCnt);
-
-	return bondCnt;
-}
 
 /*********************************************************************
  * @fn      HidDev_isbufset
@@ -1623,16 +1172,12 @@ HCI_StatusCodes_t HidService_AddService(void) {
 	hidReportKeyInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
 	hidReportBootKeyInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
 	hidReportCCInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
-	hidReportVoiceStartInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
-	hidReportVoiceDataInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
 
 
 // Initialize Client Characteristic Configuration attributes
 	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportKeyInClientCharCfg);
 	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportBootKeyInClientCharCfg);
 	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportCCInClientCharCfg);
-	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportVoiceStartInClientCharCfg);
-	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportVoiceDataInClientCharCfg);
 
 // Register GATT attribute list and CBs with GATT Server App
 	status = GATTServApp_RegisterService(hidAttrTbl, GATT_NUM_ATTRS(hidAttrTbl), GATT_MAX_ENCRYPT_KEY_SIZE, &hidCBs);
@@ -1680,19 +1225,6 @@ HCI_StatusCodes_t HidService_AddService(void) {
 	hidRptMap[4].pCccdAttr = &hidAttrTbl[HID_REPORT_CC_IN_CCCD_IDX];
 	hidRptMap[4].mode = HID_PROTOCOL_MODE_REPORT;
 
-// Voice Start input report
-	hidRptMap[5].id = hidReportRefVoiceStart[0];
-	hidRptMap[5].type = hidReportRefVoiceStart[1];
-	hidRptMap[5].handle = hidAttrTbl[HID_VOICE_START_IN_IDX].handle;
-	hidRptMap[5].pCccdAttr = &hidAttrTbl[HID_VOICE_START_IN_CCCD_IDX];
-	hidRptMap[5].mode = HID_PROTOCOL_MODE_REPORT;
-
-// Voice Data input report
-	hidRptMap[6].id = hidReportRefVoiceData[0];
-	hidRptMap[6].type = hidReportRefVoiceData[1];
-	hidRptMap[6].handle = hidAttrTbl[HID_VOICE_DATA_IN_IDX].handle;
-	hidRptMap[6].pCccdAttr = &hidAttrTbl[HID_VOICE_DATA_IN_CCCD_IDX];
-	hidRptMap[6].mode = HID_PROTOCOL_MODE_REPORT;
 
 // Battery level input report
 	void Batt_GetParameter(BATT_PARAM_BATT_LEVEL_IN_REPORT, &(hidRptMap[2]));
