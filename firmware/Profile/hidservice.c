@@ -6,7 +6,7 @@
  * \copyright 	See LICENSE
  ***********************************************************************/
 #include <stdint.h>
-#include <ti/ble5stack/central/gatt.h>
+//#include <ti/ble5stack/central/gatt.h>
 #include <ti/sysbios/knl/Semaphore.h>
 #include <ti/sysbios/knl/Queue.h>
 #include <ti/sysbios/knl/Clock.h>
@@ -17,7 +17,6 @@
 #include "profile_util.h"
 #include "bt_uuid.h"
 #include "constants.h"
-
 
 // HID report map length
 uint8_t hidReportMapLen = sizeof(hidReportMap);
@@ -32,18 +31,30 @@ static hidRptMap_t hidRptMap[HID_NUM_REPORTS];
 SAP_Service_t hidService;
 SAP_CharHandle_t hidServiceCharHandles[4];
 
-
+static UUIDType_t hidServiceUUID = {SNP_16BIT_UUID_SIZE, {LO_UINT16(HID_SERV_UUID),HI_UINT16(HID_SERV_UUID)});
 
 /*******************************************************************************
  *                              Profile Attributes - TABLE
  ******************************************************************************/
+/**HID SERVICE ATTRIBUTE**/
+static uint8_t hidProfile_hidService = 0;
+static uint8_t hidProfile_hidService_desc[] = "HID Service";
+SAP_UserDescAttr_t hidProfile_hidService_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_hidService_desc), sizeof(hidProfile_hidService_desc), hidProfile_hidService_desc)};
 
+/**INCLUDE BATTERY SERVICE ATTRIBUTE**/
+static uint8_t hidProfile_includeBattServ = 0;
+static uint8_t hidProfile_includeBattServ_desc[] = "Include Battery Service";
+SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc)};
 
-SAP_UserDescAttr_t char1UserDesc = {SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar1UserDesp), sizeof(simpleProfileChar1UserDesp), simpleProfileChar1UserDesp};
+/**INCLUDE BATTERY SERVICE ATTRIBUTE**/
+static uint8_t hidProfile_includeBattServ = 0;
+static uint8_t hidProfile_includeBattServ_desc[] = "Include Battery Service";
+SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc)};
 
-SAP_UserDescAttr_t char2UserDesc = {SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar2UserDesp), sizeof(simpleProfileChar2UserDesp), simpleProfileChar2UserDesp};
-
-SAP_UserDescAttr_t char3UserDesc = {SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar3UserDesp), sizeof(simpleProfileChar3UserDesp), simpleProfileChar3UserDesp};
+/**INCLUDE BATTERY SERVICE ATTRIBUTE**/
+static uint8_t hidProfile_includeBattServ = 0;
+static uint8_t hidProfile_includeBattServ_desc[] = "Include Battery Service";
+SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc)};
 
 SAP_UserDescAttr_t char4UserDesc = {SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar4UserDesp), sizeof(simpleProfileChar4UserDesp), simpleProfileChar4UserDesp};
 
@@ -51,174 +62,89 @@ SAP_UserCCCDAttr_t char4CCCD = {SNP_GATT_PERMIT_READ | SNP_GATT_PERMIT_WRITE};
 
 #define SERVAPP_NUM_ATTR_SUPPORTED 4
 
-static SAP_Char_t simpleProfileAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] = {
+static SAP_Char_t hidProfileAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] = {
 /* Characteristic 1 Value Declaration */
 {{SNP_16BIT_UUID_SIZE, simpleProfilechar1UUID}, /* UUID */
 SNP_GATT_PROP_READ | SNP_GATT_PROP_WRITE, /* Properties */
 SNP_GATT_PERMIT_READ | SNP_GATT_PERMIT_WRITE, /* Permissions */
 &char1UserDesc /* User Description */
-},
- };
+}, };
 /*********************************************************************
  * Profile Attributes - Table
  */
 
 static gattAttribute_t hidAttrTbl[] = {
 // HID Service
-		{{ATT_BT_UUID_SIZE, primaryServiceUUID}, /* type */
-		GATT_PERMIT_READ, /* permissions */
-		0, /* handle */
-		(uint8*) &hidService /* pValue */
-		},
+	{{ATT_BT_UUID_SIZE, primaryServiceUUID}, /* type */
+	GATT_PERMIT_READ, /* permissions */
+	0, /* handle */
+	(uint8*) &hidService /* pValue */
+	},
 
-		// Included service (battery)
-		{{ATT_BT_UUID_SIZE, includeUUID}, GATT_PERMIT_READ, 0, (uint8*) &include},
+	// Included service (battery)
+	{{ATT_BT_UUID_SIZE, includeUUID}, GATT_PERMIT_READ, 0, (uint8*) &include},
 
-		// HID Information characteristic declaration
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidInfoProps},
+	// HID Information characteristic declaration
+	{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidInfoProps},
 
-		// HID Information characteristic
-		{{ATT_BT_UUID_SIZE, hidInfoUUID}, GATT_PERMIT_ENCRYPT_READ, 0, (uint8*) hidInfo},
+	// HID Information characteristic
+	{{ATT_BT_UUID_SIZE, hidInfoUUID}, GATT_PERMIT_ENCRYPT_READ, 0, (uint8*) hidInfo},
 
-		// HID Control Point characteristic declaration
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidControlPointProps},
+	// HID Control Point characteristic declaration
+	{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidControlPointProps},
 
-		// HID Control Point characteristic
-		{{ATT_BT_UUID_SIZE, hidControlPointUUID}, GATT_PERMIT_ENCRYPT_WRITE, 0, &hidControlPoint},
+	// HID Control Point characteristic
+	{{ATT_BT_UUID_SIZE, hidControlPointUUID}, GATT_PERMIT_ENCRYPT_WRITE, 0, &hidControlPoint},
 
-		// HID Protocol Mode characteristic declaration
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidProtocolModeProps},
+	// HID Protocol Mode characteristic declaration
+	{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidProtocolModeProps},
 
-		// HID Protocol Mode characteristic
-		{{ATT_BT_UUID_SIZE, hidProtocolModeUUID}, GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE, 0, &hidProtocolMode},
+	// HID Protocol Mode characteristic
+	{{ATT_BT_UUID_SIZE, hidProtocolModeUUID}, GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE, 0, &hidProtocolMode},
 
-		// HID Report Map characteristic declaration
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportMapProps},
+	// HID Report Map characteristic declaration
+	{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportMapProps},
 
-		// HID Report Map characteristic
-		{{ATT_BT_UUID_SIZE, hidReportMapUUID}, GATT_PERMIT_ENCRYPT_READ, 0, (uint8*) hidReportMap},
+	// HID Report Map characteristic
+	{{ATT_BT_UUID_SIZE, hidReportMapUUID}, GATT_PERMIT_ENCRYPT_READ, 0, (uint8*) hidReportMap},
 
-		// HID External Report Reference Descriptor
-		{{ATT_BT_UUID_SIZE, extReportRefUUID}, GATT_PERMIT_READ, 0, hidExtReportRefDesc},
+	// HID External Report Reference Descriptor
+	{{ATT_BT_UUID_SIZE, extReportRefUUID}, GATT_PERMIT_READ, 0, hidExtReportRefDesc},
 
-		// HID Report characteristic declaration, key input
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportKeyInProps},
+	// HID Report characteristic declaration, key input
+	{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportKeyInProps},
 
-		// HID Report characteristic, key input
-		{{ATT_BT_UUID_SIZE, hidReportUUID}, GATT_PERMIT_ENCRYPT_READ, 0, &hidReportKeyIn},
+	// HID Report characteristic, key input
+	{{ATT_BT_UUID_SIZE, hidReportUUID}, GATT_PERMIT_ENCRYPT_READ, 0, &hidReportKeyIn},
 
-		// HID Report characteristic client characteristic configuration, key input
-		{{ATT_BT_UUID_SIZE, clientCharCfgUUID}, GATT_PERMIT_READ | GATT_PERMIT_ENCRYPT_WRITE, 0, (uint8*) &hidReportKeyInClientCharCfg},
+	// HID Report characteristic client characteristic configuration, key input
+	{{ATT_BT_UUID_SIZE, clientCharCfgUUID}, GATT_PERMIT_READ | GATT_PERMIT_ENCRYPT_WRITE, 0, (uint8*) &hidReportKeyInClientCharCfg},
 
-		// HID Report Reference characteristic descriptor, key input
-		{{ATT_BT_UUID_SIZE, reportRefUUID}, GATT_PERMIT_READ, 0, hidReportRefKeyIn},
-
-		// HID Report characteristic, LED output declaration
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportLedOutProps},
-
-		// HID Report characteristic, LED output
-		{{ATT_BT_UUID_SIZE, hidReportUUID}, GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE, 0, &hidReportLedOut},
-
-		// HID Report Reference characteristic descriptor, LED output
-		{{ATT_BT_UUID_SIZE, reportRefUUID}, GATT_PERMIT_READ, 0, hidReportRefLedOut},
-
-		// HID Boot Keyboard Input Report declaration
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportBootKeyInProps},
-
-		// HID Boot Keyboard Input Report
-		{{ATT_BT_UUID_SIZE, hidBootKeyInputUUID}, GATT_PERMIT_ENCRYPT_READ, 0, &hidReportBootKeyIn},
-
-		// HID Boot Keyboard Input Report characteristic client characteristic configuration
-		{{ATT_BT_UUID_SIZE, clientCharCfgUUID}, GATT_PERMIT_READ | GATT_PERMIT_ENCRYPT_WRITE, 0, (uint8*) &hidReportBootKeyInClientCharCfg},
-
-		// HID Boot Keyboard Output Report declaration
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportBootKeyOutProps},
-
-		// HID Boot Keyboard Output Report
-		{{ATT_BT_UUID_SIZE, hidBootKeyOutputUUID}, GATT_PERMIT_ENCRYPT_READ | GATT_PERMIT_ENCRYPT_WRITE, 0, &hidReportBootKeyOut},
-
-		// HID Report characteristic declaration, consumer control
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportCCInProps},
-
-		// HID Report characteristic, consumer control
-		{{ATT_BT_UUID_SIZE, hidReportUUID}, GATT_PERMIT_ENCRYPT_READ, 0, &hidReportCCIn},
-
-		// HID Report characteristic client characteristic configuration, consumer control
-		{{ATT_BT_UUID_SIZE, clientCharCfgUUID}, GATT_PERMIT_READ | GATT_PERMIT_ENCRYPT_WRITE, 0, (uint8*) &hidReportCCInClientCharCfg},
-
-		// HID Report Reference characteristic descriptor, consumer control
-		{{ATT_BT_UUID_SIZE, reportRefUUID}, GATT_PERMIT_READ, 0, hidReportRefCCIn},
-
-		// HID Voice Start Input Report declaration
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportVoiceStartProps},
-
-		// HID Voice Start Input Report
-		{{ATT_BT_UUID_SIZE, hidReportUUID}, GATT_PERMIT_ENCRYPT_READ, 0, &hidReportVoiceStart},
-
-		// HID Voice Start Input Report characteristic client characteristic configuration
-		{{ATT_BT_UUID_SIZE, clientCharCfgUUID}, GATT_PERMIT_READ | GATT_PERMIT_ENCRYPT_WRITE, 0, (uint8*) &hidReportVoiceStartInClientCharCfg},
-
-		// HID Report Reference characteristic descriptor, Voice Start
-		{{ATT_BT_UUID_SIZE, reportRefUUID}, GATT_PERMIT_READ, 0, hidReportRefVoiceStart},
-
-		// HID Voice Data Input Report declaration
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportVoiceDataProps},
-
-		// HID Voice Data Input Report
-		{{ATT_BT_UUID_SIZE, hidReportUUID}, GATT_PERMIT_ENCRYPT_READ, 0, &hidReportVoiceData},
-
-		// HID Voice Data Input Report characteristic client characteristic configuration
-		{{ATT_BT_UUID_SIZE, clientCharCfgUUID}, GATT_PERMIT_READ | GATT_PERMIT_ENCRYPT_WRITE, 0, (uint8*) &hidReportVoiceDataInClientCharCfg},
-
-		// HID Report Reference characteristic descriptor, Voice Data
-		{{ATT_BT_UUID_SIZE, reportRefUUID}, GATT_PERMIT_READ, 0, hidReportRefVoiceData},
+	// HID Report Reference characteristic descriptor, key input
+	{{ATT_BT_UUID_SIZE, reportRefUUID}, GATT_PERMIT_READ, 0, hidReportRefKeyIn},
 
 };
 
 // Attribute index enumeration-- these indexes match array elements above
 enum {
-	HID_SERVICE_IDX,                // HID Service
-	HID_INCLUDED_SERVICE_IDX,       // Included Service (battery)
-	HID_INFO_DECL_IDX,              // HID Information characteristic declaration
-	HID_INFO_IDX,                   // HID Information characteristic
-	HID_CONTROL_POINT_DECL_IDX,     // HID Control Point characteristic declaration
-	HID_CONTROL_POINT_IDX,          // HID Control Point characteristic
-	HID_PROTOCOL_MODE_DECL_IDX,     // HID Protocol Mode characteristic declaration
-	HID_PROTOCOL_MODE_IDX,          // HID Protocol Mode characteristic
-	HID_REPORT_MAP_DECL_IDX,        // HID Report Map characteristic declaration
-	HID_REPORT_MAP_IDX,             // HID Report Map characteristic
-	HID_EXT_REPORT_REF_DESC_IDX,    // HID External Report Reference Descriptor
-	HID_REPORT_KEY_IN_DECL_IDX,     // HID Report characteristic declaration, key input
-	HID_REPORT_KEY_IN_IDX,          // HID Report characteristic, key input
-	HID_REPORT_KEY_IN_CCCD_IDX,     // HID Report characteristic client characteristic configuration, key input
-	HID_REPORT_REF_KEY_IN_IDX,      // HID Report Reference characteristic descriptor, key input
-	HID_REPORT_LED_OUT_DECL_IDX,    // HID Report characteristic, LED output declaration
-	HID_REPORT_LED_OUT_IDX,         // HID Report characteristic, LED output
-	HID_REPORT_REF_LED_OUT_IDX,     // HID Report Reference characteristic descriptor, LED output
-	HID_BOOT_KEY_IN_DECL_IDX,       // HID Boot Keyboard Input Report declaration
-	HID_BOOT_KEY_IN_IDX,            // HID Boot Keyboard Input Report
-	HID_BOOT_KEY_IN_CCCD_IDX,       // HID Boot Keyboard Input Report characteristic client characteristic configuration
-	HID_BOOT_KEY_OUT_DECL_IDX,      // HID Boot Keyboard Output Report declaration
-	HID_BOOT_KEY_OUT_IDX,           // HID Boot Keyboard Output Report
-	HID_REPORT_CC_IN_DECL_IDX,      // HID Report characteristic declaration, consumer control
-	HID_REPORT_CC_IN_IDX,           // HID Report characteristic, consumer control
-	HID_REPORT_CC_IN_CCCD_IDX,      // HID Report characteristic client characteristic configuration, consumer control
-	HID_REPORT_REF_CC_IN_IDX,       // HID Report Reference characteristic descriptor, consumer control
-	HID_VOICE_START_IN_DECL_IDX,    // HID Voice Start Input Report declaration
-	HID_VOICE_START_IN_IDX,         // HID Voice Start Input Report
-	HID_VOICE_START_IN_CCCD_IDX,    // HID Voice Start Input Report characteristic client characteristic configuration
-	HID_REPORT_REF_VOICE_START_IDX, // HID Report Reference characteristic descriptor, Voice Start
-	HID_VOICE_DATA_IN_DECL_IDX,     // HID Voice Start Input Report declaration
-	HID_VOICE_DATA_IN_IDX,          // HID Voice Start Input Report
-	HID_VOICE_DATA_IN_CCCD_IDX,     // HID Voice Start Input Report characteristic client characteristic configuration
-	HID_REPORT_REF_VOICE_DATA_IDX,  // HID Report Reference characteristic descriptor, Voice Start
-};
+HID_SERVICE_IDX,                // HID Service
+HID_INCLUDED_SERVICE_IDX,       // Included Service (battery)
+HID_INFO_DECL_IDX,              // HID Information characteristic declaration
+HID_INFO_IDX,                   // HID Information characteristic
+HID_CONTROL_POINT_DECL_IDX,     // HID Control Point characteristic declaration
+HID_CONTROL_POINT_IDX,          // HID Control Point characteristic
+HID_PROTOCOL_MODE_DECL_IDX,     // HID Protocol Mode characteristic declaration
+HID_PROTOCOL_MODE_IDX,          // HID Protocol Mode characteristic
+HID_REPORT_MAP_DECL_IDX,        // HID Report Map characteristic declaration
+HID_REPORT_MAP_IDX,             // HID Report Map characteristic
+HID_EXT_REPORT_REF_DESC_IDX,    // HID External Report Reference Descriptor
+HID_REPORT_KEY_IN_DECL_IDX,     // HID Report characteristic declaration, key input
+HID_REPORT_KEY_IN_IDX,          // HID Report characteristic, key input
 
+};
 
 Task_Struct hidDeviceTask;
 Char hidDeviceTaskStack[HIDDEVICE_TASK_STACK_SIZE];
-
-
 
 static hidRptMap_t *pHidDevRptTbl;
 
@@ -269,10 +195,6 @@ static uint8_t HidDev_isbufset(uint8_t *buf, uint8_t val, uint8_t len);
 static void HidDev_stateChangeCB(gaprole_States_t newState);
 static void HidDev_processStateChangeEvt(gaprole_States_t newState);
 
-// Pair state.
-static void HidDev_pairStateCB(uint16_t connHandle, uint8_t state, uint8_t status);
-static void HidDev_processPairStateEvt(uint8_t state, uint8_t status);
-
 // Passcode.
 static void HidDev_passcodeCB(uint8_t *deviceAddr, uint16_t connectionHandle, uint8_t uiInputs, uint8_t uiOutputs);
 static void HidDev_processPasscodeEvt(uint8_t *deviceAddr, uint16_t connectionHandle, uint8_t uiInputs, uint8_t uiOutputs);
@@ -288,7 +210,6 @@ static void HidDev_scanParamCB(uint8_t event);
 // Process reconnection delay
 static void HidDev_reportReadyClockCB(UArg a0);
 
-
 /***********************************************************************
  * 					UTILITY FUNCTIONS
  ***********************************************************************/
@@ -302,15 +223,15 @@ static void HidDev_reportReadyClockCB(UArg a0);
  * @return  none
  */
 void HidDev_createTask(void) {
-	Task_Params taskParams;
+Task_Params taskParams;
 
-	// Configure task.
-	Task_Params_init(&taskParams);
-	taskParams.stack = hidDeviceTaskStack;
-	taskParams.stackSize = HIDDEVICE_TASK_STACK_SIZE;
-	taskParams.priority = HIDDEVICE_TASK_PRIORITY;
+// Configure task.
+Task_Params_init(&taskParams);
+taskParams.stack = hidDeviceTaskStack;
+taskParams.stackSize = HIDDEVICE_TASK_STACK_SIZE;
+taskParams.priority = HIDDEVICE_TASK_PRIORITY;
 
-	Task_construct(&hidDeviceTask, HidDev_taskFxn, &taskParams, NULL);
+Task_construct(&hidDeviceTask, HidDev_taskFxn, &taskParams, NULL);
 }
 
 /*********************************************************************
@@ -327,54 +248,41 @@ void HidDev_createTask(void) {
  * @return  none
  */
 static void HidDev_init(void) {
-	//Initialize and Configure Parameter varaibles for system objects
-	Clock_Params battClockParams;
-	Clock_Params reportRdyClockParams;
+//Initialize and Configure Parameter varaibles for system objects
+Clock_Params battClockParams;
+Clock_Params reportRdyClockParams;
 
-	Clock_Params_init(&battClockParams);
-	battClockParams.arg = HID_BATT_PERIODIC_EVT;
-	battClockParams.period = 0;
-	battClockParams.startFlag = false;
-	uint32_t battClockTicks = DEFAULT_BATT_PERIOD * (1000 / Clock_tickPeriod);
-	Clock_Params_init(&reportRdyClockParams);
-	reportRdyClockParams.arg = NULL;
-	reportRdyClockParams.period = 0;
-	reportRdyClockParams.startFlag = false;
-	uint32_t reportRdyClockTicks = HID_REPORT_READY_TIME * (1000 / Clock_tickPeriod);
+Clock_Params_init(&battClockParams);
+battClockParams.arg = HID_BATT_PERIODIC_EVT;
+battClockParams.period = 0;
+battClockParams.startFlag = false;
+uint32_t battClockTicks = DEFAULT_BATT_PERIOD * (1000 / Clock_tickPeriod);
+Clock_Params_init(&reportRdyClockParams);
+reportRdyClockParams.arg = NULL;
+reportRdyClockParams.period = 0;
+reportRdyClockParams.startFlag = false;
+uint32_t reportRdyClockTicks = HID_REPORT_READY_TIME * (1000 / Clock_tickPeriod);
 
-	// Create an RTOS queue for message from profile to be sent to app.
-	serviceQueue = Queue_construct(&serviceMsg, NULL);
+// Create an RTOS queue for message from profile to be sent to app.
+serviceQueue = Queue_construct(&serviceMsg, NULL);
 
-	// Create one-shot clocks for internal periodic events.
-	Clock_construct(&battPerClock, HidDev_clockHandler, battClockTicks, &battClockParams);
+// Create one-shot clocks for internal periodic events.
+Clock_construct(&battPerClock, HidDev_clockHandler, battClockTicks, &battClockParams);
 
-	// Setup the GAP Bond Manager.
-	{
-		uint8_t syncWL = HID_AUTO_SYNC_WL;
 
-		// If a bond is created, the HID Device should write the address of the
-		// HID Host in the HID Device controller's white list and set the HID
-		// Device controller's advertising filter policy to 'process scan and
-		// connection requests only from devices in the White List'.
-		void GAPBondMgr_SetParameter(GAPBOND_AUTO_SYNC_WL, sizeof(uint8_t), &syncWL);
-	}
+// Set up services.
+GGS_AddService (GATT_ALL_SERVICES);        // GAP
+GATTServApp_AddService(GATT_ALL_SERVICES);        // GATT attributes
 
-	// Set up services.
-	GGS_AddService (GATT_ALL_SERVICES);        // GAP
-	GATTServApp_AddService(GATT_ALL_SERVICES);        // GATT attributes
 
-	DevInfo_AddService();
-	Batt_AddService();
-	ScanParam_AddService();
+// Register for Battery service callback.
+Batt_Register(HidDev_batteryCB);
 
-	// Register for Battery service callback.
-	Batt_Register(HidDev_batteryCB);
+// Register for Scan Parameters service callback.
+ScanParam_Register(HidDev_scanParamCB);
 
-	// Register for Scan Parameters service callback.
-	ScanParam_Register(HidDev_scanParamCB);
-
-	// Initialize report ready clock timer
-	Clock_construct(&reportReadyClock, HidDev_reportReadyClockCB, reportRdyClockTicks, &reportRdyClockParams);
+// Initialize report ready clock timer
+Clock_construct(&reportReadyClock, HidDev_reportReadyClockCB, reportRdyClockTicks, &reportRdyClockParams);
 }
 
 /*********************************************************************
@@ -389,87 +297,86 @@ static void HidDev_init(void) {
  * @return  not used
  */
 static void HidDev_taskFxn(UArg a0, UArg a1) {
-	// Initialize the application.
-	HidDev_init();
+// Initialize the application.
+HidDev_init();
 
-	// Application main loop.
-	for (;;) {
-		uint32_t events;
+// Application main loop.
+for (;;) {
+	uint32_t events;
 
-		events = Event_pend(syncEvent, Event_Id_NONE, HID_ALL_EVENTS, ICALL_TIMEOUT_FOREVER);
+	events = Event_pend(syncEvent, Event_Id_NONE, HID_ALL_EVENTS, ICALL_TIMEOUT_FOREVER);
 
-		if (events) {
-			ICall_EntityID dest;
-			ICall_ServiceEnum src;
-			ICall_HciExtEvt *pMsg = NULL;
+	if (events) {
+		ICall_EntityID dest;
+		ICall_ServiceEnum src;
+		ICall_HciExtEvt *pMsg = NULL;
 
-			if (ICall_fetchServiceMsg(&src, &dest, (void**) &pMsg) == ICALL_ERRNO_SUCCESS) {
-				if ((src == ICALL_SERVICE_CLASS_BLE) && (dest == selfEntity)) {
-					// Process inter-task message.
-					HidDev_processStackMsg((ICall_Hdr*) pMsg);
-				}
+		if (ICall_fetchServiceMsg(&src, &dest, (void**) &pMsg) == ICALL_ERRNO_SUCCESS) {
+			if ((src == ICALL_SERVICE_CLASS_BLE) && (dest == selfEntity)) {
+				// Process inter-task message.
+				HidDev_processStackMsg((ICall_Hdr*) pMsg);
+			}
 
+			if (pMsg) {
+				freeMsg(pMsg);
+			}
+		}
+
+		// If RTOS queue is not empty, process app message.
+		if (events & HID_QUEUE_EVT) {
+			while (!Queue_empty(appMsgQueue)) {
+				hidDevEvt_t *pMsg = (hidDevEvt_t*) Util_dequeueMsg(appMsgQueue);
 				if (pMsg) {
-					freeMsg(pMsg);
+					// Process message.
+					HidDev_processAppMsg(pMsg);
+
+					// Free the space from the message.
+					free(pMsg);
 				}
 			}
+		}
 
-			// If RTOS queue is not empty, process app message.
-			if (events & HID_QUEUE_EVT) {
-				while (!Queue_empty(appMsgQueue)) {
-					hidDevEvt_t *pMsg = (hidDevEvt_t*) Util_dequeueMsg(appMsgQueue);
-					if (pMsg) {
-						// Process message.
-						HidDev_processAppMsg(pMsg);
-
-						// Free the space from the message.
-						free(pMsg);
-					}
+		// Idle timeout.
+		if (events & HID_IDLE_EVT) {
+			if (hidDevGapState == GAPROLE_CONNECTED) {
+				// If pairing in progress then restart timer.
+				if (hidDevPairingStarted) {
+					HidDev_StartIdleTimer();
+				}
+				// Else disconnect and don't allow reports to be sent
+				else {
+					hidDevReportReadyState = FALSE;
+					GAPRole_TerminateConnection();
 				}
 			}
+		}
 
-			// Idle timeout.
-			if (events & HID_IDLE_EVT) {
-				if (hidDevGapState == GAPROLE_CONNECTED) {
-					// If pairing in progress then restart timer.
-					if (hidDevPairingStarted) {
-						HidDev_StartIdleTimer();
-					}
-					// Else disconnect and don't allow reports to be sent
-					else {
-						hidDevReportReadyState = FALSE;
-						GAPRole_TerminateConnection();
-					}
+		// Battery periodic event.
+		if (events & HID_BATT_PERIODIC_EVT) {
+			HidDev_battPeriodicTask();
+		}
+
+		// Send HID report event.
+		if (events & HID_SEND_REPORT_EVT) {
+			// If connection is secure
+			if (hidDevConnSecure && hidDevReportReadyState) {
+				hidDevReport_t *pReport = HidDev_dequeueReport();
+
+				if (pReport != NULL) {
+					// Send report.
+					HidDev_sendReport(pReport->id, pReport->type, pReport->len, pReport->data);
 				}
-			}
 
-			// Battery periodic event.
-			if (events & HID_BATT_PERIODIC_EVT) {
-				HidDev_battPeriodicTask();
-			}
-
-			// Send HID report event.
-			if (events & HID_SEND_REPORT_EVT) {
-				// If connection is secure
-				if (hidDevConnSecure && hidDevReportReadyState) {
-					hidDevReport_t *pReport = HidDev_dequeueReport();
-
-					if (pReport != NULL) {
-						// Send report.
-						HidDev_sendReport(pReport->id, pReport->type, pReport->len, pReport->data);
-					}
-
-					// If there is another report in the queue
-					if (!reportQEmpty()) {
-						// Set another event.
-						Event_post(syncEvent, HID_SEND_REPORT_EVT);
-					}
+				// If there is another report in the queue
+				if (!reportQEmpty()) {
+					// Set another event.
+					Event_post(syncEvent, HID_SEND_REPORT_EVT);
 				}
 			}
 		}
 	}
 }
-
+}
 
 /*********************************************************************
  * @fn      HidDev_Register
@@ -482,13 +389,15 @@ static void HidDev_taskFxn(UArg a0, UArg a1) {
  * @return  None.
  */
 void HidDev_Register(hidDevCfg_t *pCfg, hidDevCB_t *pCBs) {
-	pHidDevCB = pCBs;
-	pHidDevCfg = pCfg;
+pHidDevCB = pCBs;
+pHidDevCfg = pCfg;
 
-	// If configured and not zero, create the idle timeout clock.
-	if ((pHidDevCfg != NULL) && (pHidDevCfg->idleTimeout != 0)) {
-		Util_constructClock(&idleTimeoutClock, HidDev_clockHandler, pHidDevCfg->idleTimeout, 0, false, HID_IDLE_EVT);
-	}
+// If configured and not zero, create the idle timeout clock.
+if ((pHidDevCfg != NULL) && (pHidDevCfg->idleTimeout != 0)) {
+
+}
+Clock_construct(&idleTimeoutClock, HidDev_clockHandler, pHidDevCfg->idleTimeout, 0, false, HID_IDLE_EVT);
+}
 }
 /*********************************************************************
  * @fn      HidDev_Report
@@ -503,31 +412,25 @@ void HidDev_Register(hidDevCfg_t *pCfg, hidDevCB_t *pCBs) {
  * @return  None.
  */
 void HidDev_Report(uint8_t id, uint8_t type, uint8_t len, uint8_t *pData) {
-	// Validate length of report
-	if (len > HID_DEV_DATA_LEN) {
-		return;
-	}
+        // Validate length of report
+if (len > HID_DEV_DATA_LEN) {
+return;
+}
+        // Make sure there're no pending reports.
+if (reportQEmpty()) {
+// Send report.
+HidDev_sendReport(id, type, len, pData);
 
-	// If connected
-	if (hidDevGapState == GAPROLE_CONNECTED) {
-		// If connection is secure
-		if (hidDevConnSecure) {
-			// Make sure there're no pending reports.
-			if (reportQEmpty()) {
-				// Send report.
-				HidDev_sendReport(id, type, len, pData);
+return;
+}
 
-				return;
-			}
-		}
-	}
-	// Else if not already advertising
-	else if (hidDevGapState != GAPROLE_ADVERTISING) {
-		HidDev_StartAdvertising();
-	}
+        // Else if not already advertising
+else if (hidDevGapState != GAPROLE_ADVERTISING) {
+HidDev_StartAdvertising();
+}
 
-	// HidDev task will send report when secure connection is established.
-	HidDev_enqueueReport(id, type, len, pData);
+        // HidDev task will send report when secure connection is established.
+HidDev_enqueueReport(id, type, len, pData);
 }
 
 /*********************************************************************
@@ -540,15 +443,15 @@ void HidDev_Report(uint8_t id, uint8_t type, uint8_t len, uint8_t *pData) {
  * @return  none
  */
 static void HidDev_processStackMsg(eventHdr_t *pMsg) {
-	switch (pMsg->event) {
-		case GATT_MSG_EVENT:
-			HidDev_processGattMsg((gattMsgEvent_t*) pMsg);
-			break;
+switch (pMsg->event) {
+case GATT_MSG_EVENT:
+	HidDev_processGattMsg((gattMsgEvent_t*) pMsg);
+	break;
 
-		default:
-			// Do nothing.
-			break;
-	}
+default:
+	// Do nothing.
+	break;
+}
 }
 
 /*********************************************************************
@@ -559,10 +462,8 @@ static void HidDev_processStackMsg(eventHdr_t *pMsg) {
  * @return  none
  */
 static void HidDev_processGattMsg(gattMsgEvent_t *pMsg) {
-	GATT_bm_free(&pMsg->msg, pMsg->method);
+GATT_bm_free(&pMsg->msg, pMsg->method);
 }
-
-
 
 /*********************************************************************
  * @fn      HidDev_passcodeCB
@@ -579,20 +480,20 @@ static void HidDev_processGattMsg(gattMsgEvent_t *pMsg) {
  * @return  none
  */
 static void HidDev_passcodeCB(uint8_t *deviceAddr, uint16_t connHandle, uint8_t uiInputs, uint8_t uiOutputs) {
-	hidDevPasscodeEvt_t *pcEvt;
+hidDevPasscodeEvt_t *pcEvt;
 
-	// Allocate message data.
-	if ((pcEvt = malloc(sizeof(hidDevPasscodeEvt_t)))) {
-		// Store the arguments.
-		memcpy(pcEvt->deviceAddr, deviceAddr, B_ADDR_LEN);
+        // Allocate message data.
+if ((pcEvt = malloc(sizeof(hidDevPasscodeEvt_t)))) {
+// Store the arguments.
+memcpy(pcEvt->deviceAddr, deviceAddr, B_ADDR_LEN);
 
-		pcEvt->connHandle = connHandle;
-		pcEvt->uiInputs = uiInputs;
-		pcEvt->uiOutputs = uiOutputs;
+pcEvt->connHandle = connHandle;
+pcEvt->uiInputs = uiInputs;
+pcEvt->uiOutputs = uiOutputs;
 
-		// Queue the event.
-		HidDev_enqueueMsg(HID_PASSCODE_EVT, 0, (uint8_t*) pcEvt);
-	}
+// Queue the event.
+HidDev_enqueueMsg(HID_PASSCODE_EVT, 0, (uint8_t*) pcEvt);
+}
 }
 
 /*********************************************************************
@@ -610,14 +511,14 @@ static void HidDev_passcodeCB(uint8_t *deviceAddr, uint16_t connHandle, uint8_t 
  * @return  none
  */
 static void HidDev_processPasscodeEvt(uint8_t *deviceAddr, uint16_t connHandle, uint8_t uiInputs, uint8_t uiOutputs) {
-	if (pHidDevCB && pHidDevCB->passcodeCB) {
-		// Execute HID app passcode callback.
-		(*pHidDevCB->passcodeCB)(deviceAddr, connHandle, uiInputs, uiOutputs);
-	} else {
-		// This profile uses a default passcode. A real-life scenario would handle
-		// all pairing scenarios and likely generate this randomly
-		GAPBondMgr_PasscodeRsp(connHandle, SUCCESS, B_APP_DEFAULT_PASSCODE);
-	}
+if (pHidDevCB && pHidDevCB->passcodeCB) {
+// Execute HID app passcode callback.
+(*pHidDevCB->passcodeCB)(deviceAddr, connHandle, uiInputs, uiOutputs);
+} else {
+// This profile uses a default passcode. A real-life scenario would handle
+// all pairing scenarios and likely generate this randomly
+GAPBondMgr_PasscodeRsp(connHandle, SUCCESS, B_APP_DEFAULT_PASSCODE);
+}
 }
 
 /*********************************************************************
@@ -630,8 +531,8 @@ static void HidDev_processPasscodeEvt(uint8_t *deviceAddr, uint16_t connHandle, 
  * @return  none
  */
 static void HidDev_batteryCB(uint8_t event) {
-	// Queue the event.
-	HidDev_enqueueMsg(HID_BATT_SERVICE_EVT, event, NULL);
+				// Queue the event.
+HidDev_enqueueMsg(HID_BATT_SERVICE_EVT, event, NULL);
 }
 
 /*********************************************************************
@@ -644,15 +545,15 @@ static void HidDev_batteryCB(uint8_t event) {
  * @return  none
  */
 static void HidDev_processBatteryEvt(uint8_t event) {
-	if (event == BATT_LEVEL_NOTI_ENABLED) {
-		// If connected start periodic measurement.
-		if (hidDevGapState == GAPROLE_CONNECTED) {
-			Util_startClock(&battPerClock);
-		}
-	} else if (event == BATT_LEVEL_NOTI_DISABLED) {
-		// Stop periodic measurement.
-		Util_stopClock(&battPerClock);
-	}
+if (event == BATT_LEVEL_NOTI_ENABLED) {
+// If connected start periodic measurement.
+if (hidDevGapState == GAPROLE_CONNECTED) {
+	Util_startClock (&battPerClock);
+}
+} else if (event == BATT_LEVEL_NOTI_DISABLED) {
+// Stop periodic measurement.
+Util_stopClock (&battPerClock);
+}
 }
 
 /*********************************************************************
@@ -665,7 +566,7 @@ static void HidDev_processBatteryEvt(uint8_t event) {
  * @return  none
  */
 static void HidDev_scanParamCB(uint8_t event) {
-	// Do nothing.
+				// Do nothing.
 }
 
 /*********************************************************************
@@ -678,13 +579,13 @@ static void HidDev_scanParamCB(uint8_t event) {
  * @return  none
  */
 static void HidDev_battPeriodicTask(void) {
-	if (hidDevGapState == GAPROLE_CONNECTED) {
-		// Perform battery level check.
-		Batt_MeasLevel();
+if (hidDevGapState == GAPROLE_CONNECTED) {
+// Perform battery level check.
+Batt_MeasLevel();
 
-		// Restart clock.
-		Util_startClock(&battPerClock);
-	}
+// Restart clock.
+Util_startClock (&battPerClock);
+}
 }
 
 /*********************************************************************
@@ -697,16 +598,16 @@ static void HidDev_battPeriodicTask(void) {
  * @return  Pointer to HID report structure
  */
 static hidRptMap_t* HidDev_reportByHandle(uint16_t handle) {
-	uint8_t i;
-	hidRptMap_t *p = pHidDevRptTbl;
+uint8_t i;
+hidRptMap_t *p = pHidDevRptTbl;
 
-	for (i = hidDevRptTblLen; i > 0; i--, p++) {
-		if (p->handle == handle && p->mode == hidProtocolMode) {
-			return p;
-		}
-	}
+for (i = hidDevRptTblLen; i > 0; i--, p++) {
+if (p->handle == handle && p->mode == hidProtocolMode) {
+	return p;
+}
+}
 
-	return NULL;
+return NULL;
 }
 
 /*********************************************************************
@@ -719,16 +620,16 @@ static hidRptMap_t* HidDev_reportByHandle(uint16_t handle) {
  * @return  Pointer to HID report structure
  */
 static hidRptMap_t* HidDev_reportByCccdHandle(uint16_t handle) {
-	uint8_t i;
-	hidRptMap_t *p = pHidDevRptTbl;
+uint8_t i;
+hidRptMap_t *p = pHidDevRptTbl;
 
-	for (i = hidDevRptTblLen; i > 0; i--, p++) {
-		if ((p->pCccdAttr != NULL) && (p->pCccdAttr->handle == handle)) {
-			return p;
-		}
-	}
+for (i = hidDevRptTblLen; i > 0; i--, p++) {
+if ((p->pCccdAttr != NULL) && (p->pCccdAttr->handle == handle)) {
+	return p;
+}
+}
 
-	return NULL;
+return NULL;
 }
 
 /*********************************************************************
@@ -742,16 +643,16 @@ static hidRptMap_t* HidDev_reportByCccdHandle(uint16_t handle) {
  * @return  Pointer to HID report structure
  */
 static hidRptMap_t* HidDev_reportById(uint8_t id, uint8_t type) {
-	uint8_t i;
-	hidRptMap_t *p = pHidDevRptTbl;
+uint8_t i;
+hidRptMap_t *p = pHidDevRptTbl;
 
-	for (i = hidDevRptTblLen; i > 0; i--, p++) {
-		if (p->id == id && p->type == type && p->mode == hidProtocolMode) {
-			return p;
-		}
-	}
+for (i = hidDevRptTblLen; i > 0; i--, p++) {
+if (p->id == id && p->type == type && p->mode == hidProtocolMode) {
+	return p;
+}
+}
 
-	return NULL;
+return NULL;
 }
 
 /*********************************************************************
@@ -767,39 +668,37 @@ static hidRptMap_t* HidDev_reportById(uint8_t id, uint8_t type) {
  * @return  None.
  */
 static void HidDev_sendReport(uint8_t id, uint8_t type, uint8_t len, uint8_t *pData) {
-	hidRptMap_t *pRpt;
+hidRptMap_t *pRpt;
 
-	// Get ATT handle for report.
-	if ((pRpt = HidDev_reportById(id, type)) != NULL) {
-		uint8_t value = GATTServApp_ReadCharCfg(gapConnHandle, GATT_CCC_TBL(pRpt->pCccdAttr->pValue));
+				// Get ATT handle for report.
+if ((pRpt = HidDev_reportById(id, type)) != NULL) {
+uint8_t value = GATTServApp_ReadCharCfg(gapConnHandle, GATT_CCC_TBL(pRpt->pCccdAttr->pValue));
 
-		// If notifications are enabled
-		if (value & GATT_CLIENT_CFG_NOTIFY) {
-			// After service discovery and encryption, the HID Device should
-			// request to change to the preferred connection parameters that best
-			// suit its use case.
-			if (updateConnParams) {
-				GAPRole_SetParameter(GAPROLE_PARAM_UPDATE_REQ, sizeof(uint8_t), &updateConnParams);
+// If notifications are enabled
+if (value & GATT_CLIENT_CFG_NOTIFY) {
+	// After service discovery and encryption, the HID Device should
+	// request to change to the preferred connection parameters that best
+	// suit its use case.
+	if (updateConnParams) {
+		GAPRole_SetParameter(GAPROLE_PARAM_UPDATE_REQ, sizeof(uint8_t), &updateConnParams);
 
-				updateConnParams = FALSE;
-			}
-
-			// Send report notification
-			if (HidDev_sendNoti(pRpt->handle, len, pData) == SUCCESS) {
-				// Save the report just sent out
-				lastReport.id = id;
-				lastReport.type = type;
-				lastReport.len = len;
-				memcpy(lastReport.data, pData, len);
-			}
-
-			// Start idle timer.
-			HidDev_StartIdleTimer();
-		}
+		updateConnParams = FALSE;
 	}
+
+	// Send report notification
+	if (HidDev_sendNoti(pRpt->handle, len, pData) == SUCCESS) {
+		// Save the report just sent out
+		lastReport.id = id;
+		lastReport.type = type;
+		lastReport.len = len;
+		memcpy(lastReport.data, pData, len);
+	}
+
+	// Start idle timer.
+	HidDev_StartIdleTimer();
 }
-
-
+}
+}
 
 /*********************************************************************
  * @fn      hidDevSendNoti
@@ -813,25 +712,25 @@ static void HidDev_sendReport(uint8_t id, uint8_t type, uint8_t len, uint8_t *pD
  * @return  Success or failure.
  */
 static uint8_t HidDev_sendNoti(uint16_t handle, uint8_t len, uint8_t *pData) {
-	uint8_t status;
-	attHandleValueNoti_t noti;
+uint8_t status;
+attHandleValueNoti_t noti;
 
-	noti.pValue = GATT_bm_alloc(gapConnHandle, ATT_HANDLE_VALUE_NOTI, len, NULL);
-	if (noti.pValue != NULL) {
-		noti.handle = handle;
-		noti.len = len;
-		memcpy(noti.pValue, pData, len);
+noti.pValue = GATT_bm_alloc(gapConnHandle, ATT_HANDLE_VALUE_NOTI, len, NULL);
+if (noti.pValue != NULL) {
+noti.handle = handle;
+noti.len = len;
+memcpy(noti.pValue, pData, len);
 
-		// Send notification
-		status = GATT_Notification(gapConnHandle, &noti, FALSE);
-		if (status != SUCCESS) {
-			GATT_bm_free((gattMsg_t*) &noti, ATT_HANDLE_VALUE_NOTI);
-		}
-	} else {
-		status = bleMemAllocError;
-	}
+// Send notification
+status = GATT_Notification(gapConnHandle, &noti, FALSE);
+if (status != SUCCESS) {
+	GATT_bm_free((gattMsg_t*) &noti, ATT_HANDLE_VALUE_NOTI);
+}
+} else {
+status = bleMemAllocError;
+}
 
-	return status;
+return status;
 }
 
 /*********************************************************************
@@ -847,27 +746,27 @@ static uint8_t HidDev_sendNoti(uint16_t handle, uint8_t len, uint8_t *pData) {
  * @return  None.
  */
 static void HidDev_enqueueReport(uint8_t id, uint8_t type, uint8_t len, uint8_t *pData) {
-	// Enqueue only if bonded.
-	if (HidDev_bondCount() > 0) {
-		// Update last index.
-		lastQIdx = (lastQIdx + 1) % HID_DEV_REPORT_Q_SIZE;
+					// Enqueue only if bonded.
+if (HidDev_bondCount() > 0) {
+// Update last index.
+lastQIdx = (lastQIdx + 1) % HID_DEV_REPORT_Q_SIZE;
 
-		if (lastQIdx == firstQIdx) {
-			// Queue overflow; discard oldest report.
-			firstQIdx = (firstQIdx + 1) % HID_DEV_REPORT_Q_SIZE;
-		}
+if (lastQIdx == firstQIdx) {
+	// Queue overflow; discard oldest report.
+	firstQIdx = (firstQIdx + 1) % HID_DEV_REPORT_Q_SIZE;
+}
 
-		// Save report.
-		hidDevReportQ[lastQIdx].id = id;
-		hidDevReportQ[lastQIdx].type = type;
-		hidDevReportQ[lastQIdx].len = len;
-		memcpy(hidDevReportQ[lastQIdx].data, pData, len);
+// Save report.
+hidDevReportQ[lastQIdx].id = id;
+hidDevReportQ[lastQIdx].type = type;
+hidDevReportQ[lastQIdx].len = len;
+memcpy(hidDevReportQ[lastQIdx].data, pData, len);
 
-		if (hidDevConnSecure) {
-			// Notify our task to send out pending reports.
-			Event_post(syncEvent, HID_SEND_REPORT_EVT);
-		}
-	}
+if (hidDevConnSecure) {
+	// Notify our task to send out pending reports.
+	Event_post(syncEvent, HID_SEND_REPORT_EVT);
+}
+}
 }
 
 /*********************************************************************
@@ -883,16 +782,15 @@ static void HidDev_enqueueReport(uint8_t id, uint8_t type, uint8_t len, uint8_t 
  * @return  None.
  */
 static hidDevReport_t* HidDev_dequeueReport(void) {
-	if (reportQEmpty()) {
-		return NULL;
-	}
-
-	// Update first index.
-	firstQIdx = (firstQIdx + 1) % HID_DEV_REPORT_Q_SIZE;
-
-	return (&(hidDevReportQ[firstQIdx]));
+if (reportQEmpty()) {
+return NULL;
 }
 
+					// Update first index.
+firstQIdx = (firstQIdx + 1) % HID_DEV_REPORT_Q_SIZE;
+
+return (&(hidDevReportQ[firstQIdx]));
+}
 
 /*********************************************************************
  * @fn      HidDev_isbufset
@@ -907,21 +805,21 @@ static hidDevReport_t* HidDev_dequeueReport(void) {
  *          FALSE otherwise.
  */
 static uint8_t HidDev_isbufset(uint8_t *buf, uint8_t val, uint8_t len) {
-	uint8_t x;
+uint8_t x;
 
-	// Validate pointer and length of report
-	if ((buf == NULL) || (len > HID_DEV_DATA_LEN)) {
-		return (FALSE);
-	}
+					// Validate pointer and length of report
+if ((buf == NULL) || (len > HID_DEV_DATA_LEN)) {
+return (FALSE);
+}
 
-	for (x = 0; x < len; x++) {
-		// Check for non-initialized value
-		if (buf[x] != val) {
-			return (FALSE);
-		}
-	}
+for (x = 0; x < len; x++) {
+// Check for non-initialized value
+if (buf[x] != val) {
+	return (FALSE);
+}
+}
 
-	return (TRUE);
+return (TRUE);
 }
 
 /*********************************************************************
@@ -935,7 +833,7 @@ static uint8_t HidDev_isbufset(uint8_t *buf, uint8_t val, uint8_t len) {
  * @return  None
  */
 static void HidDev_clockHandler(UArg arg) {
-	Event_post(syncEvent, arg);
+Event_post(syncEvent, arg);
 }
 
 /*********************************************************************
@@ -950,19 +848,19 @@ static void HidDev_clockHandler(UArg arg) {
  * @return  TRUE or FALSE
  */
 static uint8_t HidDev_enqueueMsg(uint16_t event, uint8_t state, uint8_t *pData) {
-	hidDevEvt_t *pMsg;
+hidDevEvt_t *pMsg;
 
-	// Create dynamic pointer to message.
-	if (pMsg = malloc(sizeof(hidDevEvt_t))) {
-		pMsg->hdr.event = event;
-		pMsg->hdr.state = state;
-		pMsg->pData = pData;
+					// Create dynamic pointer to message.
+if (pMsg = malloc(sizeof(hidDevEvt_t))) {
+pMsg->hdr.event = event;
+pMsg->hdr.state = state;
+pMsg->pData = pData;
 
-		// Enqueue the message.
-		return Util_enqueueMsg(appMsgQueue, syncEvent, (uint8*) pMsg);
-	}
+// Enqueue the message.
+return Util_enqueueMsg(appMsgQueue, syncEvent, (uint8*) pMsg);
+}
 
-	return FALSE;
+return FALSE;
 }
 
 /*********************************************************************
@@ -975,13 +873,13 @@ static uint8_t HidDev_enqueueMsg(uint16_t event, uint8_t state, uint8_t *pData) 
  * @return  None.
  */
 static void HidDev_reportReadyClockCB(UArg a0) {
-	// Allow reports to be sent
-	hidDevReportReadyState = TRUE;
+					// Allow reports to be sent
+hidDevReportReadyState = TRUE;
 
-	// If there are reports in the queue
-	if (!reportQEmpty()) {
-		Event_post(syncEvent, HID_SEND_REPORT_EVT);
-	}
+					// If there are reports in the queue
+if (!reportQEmpty()) {
+Event_post(syncEvent, HID_SEND_REPORT_EVT);
+}
 }
 
 /*********************************************************************
@@ -1004,57 +902,57 @@ static void HidDev_reportReadyClockCB(UArg a0) {
  * @return      SUCCESS, blePending or Failure
  */
 HCI_StatusCodes_t HidService_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8_t method) {
-	HCI_StatusCodes_t status = SUCCESS;
-	hidRptMap_t *pRpt;
+HCI_StatusCodes_t status = SUCCESS;
+hidRptMap_t *pRpt;
 
-	uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
+uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
 
-	// Only report map is long.
-	if (offset > 0 && uuid != REPORT_MAP_UUID) {
-		return (ATT_ERR_ATTR_NOT_LONG);
-	}
+					// Only report map is long.
+if (offset > 0 && uuid != REPORT_MAP_UUID) {
+return (ATT_ERR_ATTR_NOT_LONG);
+}
 
-	if (uuid == REPORT_UUID || uuid == BOOT_KEY_INPUT_UUID || uuid == BOOT_KEY_OUTPUT_UUID || uuid == BOOT_MOUSE_INPUT_UUID) {
-		// Find report ID in table.
-		if ((pRpt = HidDev_reportByHandle(pAttr->handle)) != NULL) {
-			// Execute report callback.
-			status = (*pHidDevCB->reportCB)(pRpt->id, pRpt->type, uuid, HID_DEV_OPER_READ, pLen, pValue);
-		} else {
-			*pLen = 0;
-		}
-	} else if (uuid == REPORT_MAP_UUID) {
-		// If the value offset of the Read Blob Request is greater than the
-		// length of the attribute value, an Error Response shall be sent with
-		// the error code Invalid Offset.
-		if (offset > hidReportMapLen) {
-			status = ATT_ERR_INVALID_OFFSET;
-		} else {
-			// Determine read length.
-			*pLen = MIN(maxLen, (hidReportMapLen - offset));
+if (uuid == REPORT_UUID || uuid == BOOT_KEY_INPUT_UUID || uuid == BOOT_KEY_OUTPUT_UUID || uuid == BOOT_MOUSE_INPUT_UUID) {
+// Find report ID in table.
+if ((pRpt = HidDev_reportByHandle(pAttr->handle)) != NULL) {
+	// Execute report callback.
+	status = (*pHidDevCB->reportCB)(pRpt->id, pRpt->type, uuid, HID_DEV_OPER_READ, pLen, pValue);
+} else {
+	*pLen = 0;
+}
+} else if (uuid == REPORT_MAP_UUID) {
+// If the value offset of the Read Blob Request is greater than the
+// length of the attribute value, an Error Response shall be sent with
+// the error code Invalid Offset.
+if (offset > hidReportMapLen) {
+	status = ATT_ERR_INVALID_OFFSET;
+} else {
+	// Determine read length.
+	*pLen = MIN(maxLen, (hidReportMapLen - offset));
 
-			// Copy data.
-			memcpy(&pValue, pAttr->pValue + offset, (unsigned int) *pLen);
-		}
-	} else if (uuid == HID_INFORMATION_UUID) {
-		*pLen = HID_INFORMATION_LEN;
-		memcpy(pValue, pAttr->pValue, HID_INFORMATION_LEN);
-	} else if (uuid == GATT_REPORT_REF_UUID) {
-		*pLen = HID_REPORT_REF_LEN;
-		memcpy(pValue, pAttr->pValue, HID_REPORT_REF_LEN);
-	} else if (uuid == PROTOCOL_MODE_UUID) {
-		*pLen = HID_PROTOCOL_MODE_LEN;
-		pValue[0] = pAttr->pValue[0];
-	} else if (uuid == GATT_EXT_REPORT_REF_UUID) {
-		*pLen = HID_EXT_REPORT_REF_LEN;
-		memcpy(pValue, pAttr->pValue, HID_EXT_REPORT_REF_LEN);
-	}
+	// Copy data.
+	memcpy(&pValue, pAttr->pValue + offset, (unsigned int) *pLen);
+}
+} else if (uuid == HID_INFORMATION_UUID) {
+*pLen = HID_INFORMATION_LEN;
+memcpy(pValue, pAttr->pValue, HID_INFORMATION_LEN);
+} else if (uuid == GATT_REPORT_REF_UUID) {
+*pLen = HID_REPORT_REF_LEN;
+memcpy(pValue, pAttr->pValue, HID_REPORT_REF_LEN);
+} else if (uuid == PROTOCOL_MODE_UUID) {
+*pLen = HID_PROTOCOL_MODE_LEN;
+pValue[0] = pAttr->pValue[0];
+} else if (uuid == GATT_EXT_REPORT_REF_UUID) {
+*pLen = HID_EXT_REPORT_REF_LEN;
+memcpy(pValue, pAttr->pValue, HID_EXT_REPORT_REF_LEN);
+}
 
-	// Restart idle timer.
-	if (status == SUCCESS) {
-		HidDev_StartIdleTimer();
-	}
+				// Restart idle timer.
+if (status == SUCCESS) {
+HidDev_StartIdleTimer();
+}
 
-	return (status);
+return (status);
 }
 
 /*********************************************************************
@@ -1072,66 +970,66 @@ HCI_StatusCodes_t HidService_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pA
  * @return  SUCCESS, blePending or Failure
  */
 HCI_StatusCodes_t HidService_WriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8_t method) {
-	HCI_StatusCodes_t status = SUCCESS;
-	hidRptMap_t *pRpt;
+HCI_StatusCodes_t status = SUCCESS;
+hidRptMap_t *pRpt;
 
-	// Make sure it's not a blob operation (no attributes in the profile are long).
-	if (offset > 0) {
-		return (ATT_ERR_ATTR_NOT_LONG);
+				// Make sure it's not a blob operation (no attributes in the profile are long).
+if (offset > 0) {
+return (ATT_ERR_ATTR_NOT_LONG);
+}
+
+uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
+
+if (uuid == REPORT_UUID || uuid == BOOT_KEY_OUTPUT_UUID) {
+// Find report ID in table.
+if ((pRpt = HidDev_reportByHandle(pAttr->handle)) != NULL) {
+	// Execute report callback.
+	status = (*pHidDevCB->reportCB)(pRpt->id, pRpt->type, uuid, HID_DEV_OPER_WRITE, &len, pValue);
+}
+} else if (uuid == HID_CTRL_PT_UUID) {
+// Validate length and value range.
+if (len == 1) {
+	if (pValue[0] == HID_CMD_SUSPEND || pValue[0] == HID_CMD_EXIT_SUSPEND) {
+		// Execute HID app event callback.
+		(*pHidDevCB->evtCB)((pValue[0] == HID_CMD_SUSPEND) ? HID_DEV_SUSPEND_EVT : HID_DEV_EXIT_SUSPEND_EVT);
+	} else {
+		status = ATT_ERR_INVALID_VALUE;
 	}
+} else {
+	status = ATT_ERR_INVALID_VALUE_SIZE;
+}
+} else if (uuid == GATT_CLIENT_CHAR_CFG_UUID) {
+status = GATTServApp_ProcessCCCWriteReq(connHandle, pAttr, pValue, len, offset, GATT_CLIENT_CFG_NOTIFY);
+if (status == SUCCESS) {
+	uint16_t charCfg = BUILD_UINT16(pValue[0], pValue[1]);
 
-	uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
-
-	if (uuid == REPORT_UUID || uuid == BOOT_KEY_OUTPUT_UUID) {
-		// Find report ID in table.
-		if ((pRpt = HidDev_reportByHandle(pAttr->handle)) != NULL) {
-			// Execute report callback.
-			status = (*pHidDevCB->reportCB)(pRpt->id, pRpt->type, uuid, HID_DEV_OPER_WRITE, &len, pValue);
-		}
-	} else if (uuid == HID_CTRL_PT_UUID) {
-		// Validate length and value range.
-		if (len == 1) {
-			if (pValue[0] == HID_CMD_SUSPEND || pValue[0] == HID_CMD_EXIT_SUSPEND) {
-				// Execute HID app event callback.
-				(*pHidDevCB->evtCB)((pValue[0] == HID_CMD_SUSPEND) ? HID_DEV_SUSPEND_EVT : HID_DEV_EXIT_SUSPEND_EVT);
-			} else {
-				status = ATT_ERR_INVALID_VALUE;
-			}
-		} else {
-			status = ATT_ERR_INVALID_VALUE_SIZE;
-		}
-	} else if (uuid == GATT_CLIENT_CHAR_CFG_UUID) {
-		status = GATTServApp_ProcessCCCWriteReq(connHandle, pAttr, pValue, len, offset, GATT_CLIENT_CFG_NOTIFY);
-		if (status == SUCCESS) {
-			uint16_t charCfg = BUILD_UINT16(pValue[0], pValue[1]);
-
-			// Find report ID in table.
-			if ((pRpt = HidDev_reportByCccdHandle(pAttr->handle)) != NULL) {
-				// Execute report callback.
-				(*pHidDevCB->reportCB)(pRpt->id, pRpt->type, uuid, (charCfg == GATT_CLIENT_CFG_NOTIFY) ? HID_DEV_OPER_ENABLE : HID_DEV_OPER_DISABLE, &len, pValue);
-			}
-		}
-	} else if (uuid == PROTOCOL_MODE_UUID) {
-		if (len == HID_PROTOCOL_MODE_LEN) {
-			if (pValue[0] == HID_PROTOCOL_MODE_BOOT || pValue[0] == HID_PROTOCOL_MODE_REPORT) {
-				pAttr->pValue[0] = pValue[0];
-
-				// Execute HID app event callback.
-				(*pHidDevCB->evtCB)((pValue[0] == HID_PROTOCOL_MODE_BOOT) ? HID_DEV_SET_BOOT_EVT : HID_DEV_SET_REPORT_EVT);
-			} else {
-				status = ATT_ERR_INVALID_VALUE;
-			}
-		} else {
-			status = ATT_ERR_INVALID_VALUE_SIZE;
-		}
+	// Find report ID in table.
+	if ((pRpt = HidDev_reportByCccdHandle(pAttr->handle)) != NULL) {
+		// Execute report callback.
+		(*pHidDevCB->reportCB)(pRpt->id, pRpt->type, uuid, (charCfg == GATT_CLIENT_CFG_NOTIFY) ? HID_DEV_OPER_ENABLE : HID_DEV_OPER_DISABLE, &len, pValue);
 	}
+}
+} else if (uuid == PROTOCOL_MODE_UUID) {
+if (len == HID_PROTOCOL_MODE_LEN) {
+	if (pValue[0] == HID_PROTOCOL_MODE_BOOT || pValue[0] == HID_PROTOCOL_MODE_REPORT) {
+		pAttr->pValue[0] = pValue[0];
 
-	// Restart idle timer.
-	if (status == SUCCESS) {
-		HidDev_StartIdleTimer();
+		// Execute HID app event callback.
+		(*pHidDevCB->evtCB)((pValue[0] == HID_PROTOCOL_MODE_BOOT) ? HID_DEV_SET_BOOT_EVT : HID_DEV_SET_REPORT_EVT);
+	} else {
+		status = ATT_ERR_INVALID_VALUE;
 	}
+} else {
+	status = ATT_ERR_INVALID_VALUE_SIZE;
+}
+}
 
-	return (status);
+				// Restart idle timer.
+if (status == SUCCESS) {
+HidDev_StartIdleTimer();
+}
+
+return (status);
 }
 
 /*********************************************************************
@@ -1147,9 +1045,9 @@ HCI_StatusCodes_t HidService_WriteAttrCB(uint16_t connHandle, gattAttribute_t *p
 // pfnReadAttrCB or pfnWriteAttrCB, so no checks for authorization need to be
 // made within these functions.
 const gattServiceCBs_t hidCBs = {HidService_ReadAttrCB,  // Read callback function pointer
-		HidService_WriteAttrCB, // Write callback function pointer
-		NULL                  // Authorization callback function pointer
-		};
+HidService_WriteAttrCB, // Write callback function pointer
+NULL                  // Authorization callback function pointer
+};
 
 /*********************************************************************
  * PUBLIC FUNCTIONS
@@ -1166,73 +1064,71 @@ const gattServiceCBs_t hidCBs = {HidService_ReadAttrCB,  // Read callback functi
  * @return  Success or Failure
  */
 HCI_StatusCodes_t HidService_AddService(void) {
-	uint8 status = SUCCESS;
+uint8 status = SUCCESS;
 
 // Allocate Client Charateristic Configuration tables.
-	hidReportKeyInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
-	hidReportBootKeyInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
-	hidReportCCInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
-
+hidReportKeyInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
+hidReportBootKeyInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
+hidReportCCInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
 
 // Initialize Client Characteristic Configuration attributes
-	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportKeyInClientCharCfg);
-	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportBootKeyInClientCharCfg);
-	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportCCInClientCharCfg);
+GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportKeyInClientCharCfg);
+GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportBootKeyInClientCharCfg);
+GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportCCInClientCharCfg);
 
 // Register GATT attribute list and CBs with GATT Server App
-	status = GATTServApp_RegisterService(hidAttrTbl, GATT_NUM_ATTRS(hidAttrTbl), GATT_MAX_ENCRYPT_KEY_SIZE, &hidCBs);
+status = GATTServApp_RegisterService(hidAttrTbl, GATT_NUM_ATTRS(hidAttrTbl), GATT_MAX_ENCRYPT_KEY_SIZE, &hidCBs);
 
 // Set up included service
-	Batt_GetParameter(BATT_PARAM_SERVICE_HANDLE, &GATT_INCLUDED_HANDLE(hidAttrTbl, HID_INCLUDED_SERVICE_IDX));
+Batt_GetParameter(BATT_PARAM_SERVICE_HANDLE, &GATT_INCLUDED_HANDLE(hidAttrTbl, HID_INCLUDED_SERVICE_IDX));
 
 // Construct map of reports to characteristic handles
 // Each report is uniquely identified via its ID and type
 
 // Key input report
-	hidRptMap[0].id = hidReportRefKeyIn[0];
-	hidRptMap[0].type = hidReportRefKeyIn[1];
-	hidRptMap[0].handle = hidAttrTbl[HID_REPORT_KEY_IN_IDX].handle;
-	hidRptMap[0].pCccdAttr = &hidAttrTbl[HID_REPORT_KEY_IN_CCCD_IDX];
-	hidRptMap[0].mode = HID_PROTOCOL_MODE_REPORT;
+hidRptMap[0].id = hidReportRefKeyIn[0];
+hidRptMap[0].type = hidReportRefKeyIn[1];
+hidRptMap[0].handle = hidAttrTbl[HID_REPORT_KEY_IN_IDX].handle;
+hidRptMap[0].pCccdAttr = &hidAttrTbl[HID_REPORT_KEY_IN_CCCD_IDX];
+hidRptMap[0].mode = HID_PROTOCOL_MODE_REPORT;
 
 // LED output report
-	hidRptMap[1].id = hidReportRefLedOut[0];
-	hidRptMap[1].type = hidReportRefLedOut[1];
-	hidRptMap[1].handle = hidAttrTbl[HID_REPORT_LED_OUT_IDX].handle;
-	hidRptMap[1].pCccdAttr = NULL;
-	hidRptMap[1].mode = HID_PROTOCOL_MODE_REPORT;
+hidRptMap[1].id = hidReportRefLedOut[0];
+hidRptMap[1].type = hidReportRefLedOut[1];
+hidRptMap[1].handle = hidAttrTbl[HID_REPORT_LED_OUT_IDX].handle;
+hidRptMap[1].pCccdAttr = NULL;
+hidRptMap[1].mode = HID_PROTOCOL_MODE_REPORT;
 
 // Boot keyboard input report
 // Use same ID and type as key input report
-	hidRptMap[2].id = hidReportRefKeyIn[0];
-	hidRptMap[2].type = hidReportRefKeyIn[1];
-	hidRptMap[2].handle = hidAttrTbl[HID_BOOT_KEY_IN_IDX].handle;
-	hidRptMap[2].pCccdAttr = &hidAttrTbl[HID_BOOT_KEY_IN_CCCD_IDX];
-	hidRptMap[2].mode = HID_PROTOCOL_MODE_BOOT;
+hidRptMap[2].id = hidReportRefKeyIn[0];
+hidRptMap[2].type = hidReportRefKeyIn[1];
+hidRptMap[2].handle = hidAttrTbl[HID_BOOT_KEY_IN_IDX].handle;
+hidRptMap[2].pCccdAttr = &hidAttrTbl[HID_BOOT_KEY_IN_CCCD_IDX];
+hidRptMap[2].mode = HID_PROTOCOL_MODE_BOOT;
 
 // Boot keyboard output report
 // Use same ID and type as LED output report
-	hidRptMap[3].id = hidReportRefLedOut[0];
-	hidRptMap[3].type = hidReportRefLedOut[1];
-	hidRptMap[3].handle = hidAttrTbl[HID_BOOT_KEY_OUT_IDX].handle;
-	hidRptMap[3].pCccdAttr = NULL;
-	hidRptMap[3].mode = HID_PROTOCOL_MODE_BOOT;
+hidRptMap[3].id = hidReportRefLedOut[0];
+hidRptMap[3].type = hidReportRefLedOut[1];
+hidRptMap[3].handle = hidAttrTbl[HID_BOOT_KEY_OUT_IDX].handle;
+hidRptMap[3].pCccdAttr = NULL;
+hidRptMap[3].mode = HID_PROTOCOL_MODE_BOOT;
 
 // Consumer Control input report
-	hidRptMap[4].id = hidReportRefCCIn[0];
-	hidRptMap[4].type = hidReportRefCCIn[1];
-	hidRptMap[4].handle = hidAttrTbl[HID_REPORT_CC_IN_IDX].handle;
-	hidRptMap[4].pCccdAttr = &hidAttrTbl[HID_REPORT_CC_IN_CCCD_IDX];
-	hidRptMap[4].mode = HID_PROTOCOL_MODE_REPORT;
-
+hidRptMap[4].id = hidReportRefCCIn[0];
+hidRptMap[4].type = hidReportRefCCIn[1];
+hidRptMap[4].handle = hidAttrTbl[HID_REPORT_CC_IN_IDX].handle;
+hidRptMap[4].pCccdAttr = &hidAttrTbl[HID_REPORT_CC_IN_CCCD_IDX];
+hidRptMap[4].mode = HID_PROTOCOL_MODE_REPORT;
 
 // Battery level input report
-	void Batt_GetParameter(BATT_PARAM_BATT_LEVEL_IN_REPORT, &(hidRptMap[2]));
+void Batt_GetParameter(BATT_PARAM_BATT_LEVEL_IN_REPORT, &(hidRptMap[2]));
 
 // Setup report ID map
-	HidDev_RegisterReports(HID_NUM_REPORTS, hidRptMap);
+HidDev_RegisterReports(HID_NUM_REPORTS, hidRptMap);
 
-	return status;
+return status;
 }
 
 /*********************************************************************
@@ -1252,35 +1148,35 @@ HCI_StatusCodes_t HidService_AddService(void) {
  * @return  GATT status code.
  */
 uint32_t Hid_SetParameter(uint8 id, uint8 type, uint16 uuid, uint8 len, void *pValue) {
-	uint_fast8_t ret = BLE_PROFILE_SUCCESS;
+uint_fast8_t ret = BLE_PROFILE_SUCCESS;
 
-	switch (uuid) {
-		case REPORT_UUID:
-			if (type == HID_REPORT_TYPE_OUTPUT) {
-				if (len == 1) {
-					hidReportLedOut = *((uint8*) pValue);
-				} else {
-					ret = ATT_ERR_INVALID_VALUE_SIZE;
-				}
-			} else {
-				ret = ATT_ERR_ATTR_NOT_FOUND;
-			}
-			break;
-
-		case BOOT_KEY_OUTPUT_UUID:
-			if (len == 1) {
-				hidReportBootKeyOut = *((uint8*) pValue);
-			} else {
-				ret = ATT_ERR_INVALID_VALUE_SIZE;
-			}
-			break;
-
-		default:
-			// Ignore the request
-			break;
+switch (uuid) {
+case REPORT_UUID:
+	if (type == HID_REPORT_TYPE_OUTPUT) {
+		if (len == 1) {
+			hidReportLedOut = *((uint8*) pValue);
+		} else {
+			ret = ATT_ERR_INVALID_VALUE_SIZE;
+		}
+	} else {
+		ret = ATT_ERR_ATTR_NOT_FOUND;
 	}
+	break;
 
-	return (ret);
+case BOOT_KEY_OUTPUT_UUID:
+	if (len == 1) {
+		hidReportBootKeyOut = *((uint8*) pValue);
+	} else {
+		ret = ATT_ERR_INVALID_VALUE_SIZE;
+	}
+	break;
+
+default:
+	// Ignore the request
+	break;
+}
+
+return (ret);
 }
 
 /*********************************************************************
@@ -1300,27 +1196,27 @@ uint32_t Hid_SetParameter(uint8 id, uint8 type, uint16 uuid, uint8 len, void *pV
  * @return  GATT status code.
  */
 uint8 Hid_GetParameter(uint8 id, uint8 type, uint16 uuid, uint8 *pLen, void *pValue) {
-	switch (uuid) {
-		case REPORT_UUID:
-			if (type == HID_REPORT_TYPE_OUTPUT) {
-				*((uint8*) pValue) = hidReportLedOut;
-				*pLen = 1;
-			} else {
-				*pLen = 0;
-			}
-			break;
-
-		case BOOT_KEY_OUTPUT_UUID:
-			*((uint8*) pValue) = hidReportBootKeyOut;
-			*pLen = 1;
-			break;
-
-		default:
-			*pLen = 0;
-			break;
+switch (uuid) {
+case REPORT_UUID:
+	if (type == HID_REPORT_TYPE_OUTPUT) {
+		*((uint8*) pValue) = hidReportLedOut;
+		*pLen = 1;
+	} else {
+		*pLen = 0;
 	}
+	break;
 
-	return (SUCCESS);
+case BOOT_KEY_OUTPUT_UUID:
+	*((uint8*) pValue) = hidReportBootKeyOut;
+	*pLen = 1;
+	break;
+
+default:
+	*pLen = 0;
+	break;
+}
+
+return (SUCCESS);
 }
 
 /*********************************************************************

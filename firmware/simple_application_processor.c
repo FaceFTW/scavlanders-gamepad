@@ -23,15 +23,26 @@
 #include <ti/drivers/Timer.h>					//TI RTOS Timer Library
 #include <ti/display/Display.h>					//TI RTOS Display Library
 
+#include <ti/sysbios/knl/Semaphore.h>
+#include <ti/sysbios/knl/Queue.h>
+#include <ti/sysbios/knl/Clock.h>
+#include <ti/sysbios/knl/Task.h>
+
+
 #include <ti/sap/sap.h>							//TI Simple Application Proessor (SAP) Library
 #include <ti/sbl/sbl.h>							//TI Serial BootLoader (SBL) Library
 #include <ti/sbl/sbl_image.h>					//TI SBL Image Binary Definition
 
 /* Local Includes */
 #include "simple_application_processor.h"
-#include "Profile/simple_gatt_profile.h"
+//#include "Profile/simple_gatt_profile.h"
+#include "Profile/profile_util.h"
 #include "Board.h"
 #include "platform.h"
+#include "Profile/hidservice.h"
+#include "Profile/devinfoservice.h"
+
+
 
 /***********************************************************************
  * 						 VARIABLE DECLARATIONS
@@ -40,6 +51,12 @@
 static mqd_t apQueueRec;
 static mqd_t apQueueSend;
 static sem_t notifySem;
+Semaphore_Handle serviceHandle;		//
+Queue_Handle serviceQueue;			//Queue Object for service Messages
+Queue_Struct serviceMsg;				//Queue Structure for Service Messages
+
+Clock_Struct battPerClock;			//Clock used for Battery Service (For conformance)
+Clock_Struct idleTimeoutClock;		//Clock used for timeout checks
 
 //Debugging Log Stream
 extern Display_Handle displayOut;
@@ -53,7 +70,7 @@ static pthread_t notifyTask;
 
 /* SAP Parameters for opening serial port to SNP */
 static SAP_Params sapParams;
-static uint8_t snpDeviceName[] = { 'S', 'c', 'a', 'v', 'l', 'a', 'n', 'd', 'e', 'r', 's', ' ', 'G', 'a', 'm', 'e', 'p', 'a', 'd' };
+static uint8_t snpDeviceName[] = {'S', 'c', 'a', 'v', 'l', 'a', 'n', 'd', 'e', 'r', 's', ' ', 'G', 'a', 'm', 'e', 'p', 'a', 'd'};
 
 /* GAP - SCAN RSP data (max size = 31 bytes) */
 static uint8_t scanRspData[] = {
@@ -108,13 +125,12 @@ static void* AP_taskFxn(void *arg0);
 static void* AP_notifyTask(void *arg0);
 static void AP_initServices(void);
 static void AP_keyHandler(void);
-static void AP_bslKeyHandler(void);
 static void AP_timerHandler(Timer_Handle handle);
 static void AP_asyncCB(uint8_t cmd1, void *pParams);
 static void AP_processSNPEventCB(uint16_t event, snpEventParam_t *param);
 static void AP_SPWriteCB(uint8_t charID);
 static void AP_SPcccdCB(uint8_t charID, uint16_t value);
-static BLEProfileCallbacks_t simpleCBs = { AP_SPWriteCB, AP_SPcccdCB };
+static BLEProfileCallbacks_t simpleCBs = {AP_SPWriteCB, AP_SPcccdCB};
 
 /*******************************************************************************
  *                        PUBLIC FUNCTIONS
@@ -141,8 +157,7 @@ void AP_createTask(void) {
 	retc = pthread_attr_setdetachstate(&pAttrs, detachState);
 
 	if (retc != 0) {
-		while (1)
-			;
+		while (1);
 	}
 
 	pthread_attr_setschedparam(&pAttrs, &priParam);
@@ -150,8 +165,7 @@ void AP_createTask(void) {
 	retc |= pthread_attr_setstacksize(&pAttrs, AP_TASK_STACK_SIZE);
 
 	if (retc != 0) {
-		while (1)
-			;
+		while (1);
 	}
 
 	/* Creating the two tasks */
@@ -159,8 +173,7 @@ void AP_createTask(void) {
 	retc = pthread_create(&notifyTask, &pAttrs, AP_notifyTask, NULL);
 
 	if (retc != 0) {
-		while (1)
-			;
+		while (1);
 	}
 }
 
@@ -275,13 +288,13 @@ static void* AP_taskFxn(void *arg0) {
 				clock_gettime(CLOCK_REALTIME, &ts);
 				ts.tv_sec += 1;
 
-				mq_timedreceive(apQueueRec, (void*) &curEvent, sizeof(uint32_t), &prio, &ts);
+				mq_timedreceive(apQueueRec, (char*) &curEvent, sizeof(uint32_t), &prio, &ts);
 
 				SAP_reset();
 
 				do {
 					curEvent = 0;
-					mq_receive(apQueueRec, (void*) &curEvent, sizeof(uint32_t), &prio);
+					mq_receive(apQueueRec, (char*) &curEvent, sizeof(uint32_t), &prio);
 
 					if ((curEvent != AP_EVT_BSL_BUTTON) && (curEvent != AP_EVT_PUI)) {
 						Display_printf(displayOut, 0, 0, "[bleThread] Warning! Unexpected Event %lu", curEvent);
@@ -309,21 +322,17 @@ static void* AP_taskFxn(void *arg0) {
 
 				Display_print0(displayOut, 0, 0, "Starting advertisement... ");
 
-				/* Setting Advertising Name */
-				SAP_setServiceParam(SNP_GGS_SERV_ID, SNP_GGS_DEVICE_NAME_ATT, sizeof(snpDeviceName), snpDeviceName);
+				SAP_setParam(SAP_PARAM_ADV, SAP_LIM_DISC_ADV_INT_MIN, HID_INITIAL_ADV_INT_MIN);
 
-				/* Set advertising data. */
-				SAP_setParam(SAP_PARAM_ADV, SAP_ADV_DATA_NOTCONN, sizeof(advertData), advertData);
 
-				/* Set scan response data. */
-				SAP_setParam(SAP_PARAM_ADV, SAP_ADV_DATA_SCANRSP, sizeof(scanRspData), scanRspData);
-
-				/* Enable Advertising and await NP response */
-				SAP_setParam(SAP_PARAM_ADV, SAP_ADV_STATE, 1, &enableAdv);
+				SAP_setServiceParam(SNP_GGS_SERV_ID, SNP_GGS_DEVICE_NAME_ATT, sizeof(snpDeviceName), snpDeviceName);	//Setting Advertising Name
+				SAP_setParam(SAP_PARAM_ADV, SAP_ADV_DATA_NOTCONN, sizeof(advertData), advertData);  					//Set advertising data.
+				SAP_setParam(SAP_PARAM_ADV, SAP_ADV_DATA_SCANRSP, sizeof(scanRspData), scanRspData);					//Set scan response data.
+				SAP_setParam(SAP_PARAM_ADV, SAP_ADV_STATE, 1, &enableAdv);												//Enable Advertising and await NP response
 
 				do {
 					curEvent = 0;
-					mq_receive(apQueueRec, (void*) &curEvent, sizeof(uint32_t), &prio);
+					mq_receive(apQueueRec, (char*) &curEvent, sizeof(uint32_t), &prio);
 
 					if (curEvent != AP_EVT_ADV_ENB) {
 						Display_printf(displayOut, 0, 0, "[bleThread] Warning! Unexpected Event %lu", curEvent);
@@ -337,7 +346,7 @@ static void* AP_taskFxn(void *arg0) {
 				clock_gettime(CLOCK_REALTIME, &ts);
 				ts.tv_sec += 30;
 				curEvent = 0;
-				mq_timedreceive(apQueueRec, (void*) &curEvent, sizeof(uint32_t), &prio, &ts);
+				mq_timedreceive(apQueueRec, (char*) &curEvent, sizeof(uint32_t), &prio, &ts);
 
 				if (curEvent == AP_EVT_CONN_EST) {
 					state = AP_CONNECTED;
@@ -352,7 +361,7 @@ static void* AP_taskFxn(void *arg0) {
 				/* Before connecting, NP will send the stop ADV message */
 				do {
 					curEvent = 0;
-					mq_receive(apQueueRec, (void*) &curEvent, sizeof(uint32_t), &prio);
+					mq_receive(apQueueRec, (char*) &curEvent, sizeof(uint32_t), &prio);
 
 					if (curEvent != AP_EVT_ADV_END) {
 						Display_printf(displayOut, 0, 0, "[bleThread] Warning! Unexpected Event %lu", curEvent);
@@ -367,7 +376,7 @@ static void* AP_taskFxn(void *arg0) {
 				 */
 				do {
 					curEvent = 0;
-					mq_receive(apQueueRec, (void*) &curEvent, sizeof(uint32_t), &prio);
+					mq_receive(apQueueRec, (char*) &curEvent, sizeof(uint32_t), &prio);
 
 					if (curEvent != AP_EVT_CONN_TERM) {
 						Display_printf(displayOut, 0, 0, "[bleThread] Warning! Unexpected Event %lu", curEvent);
@@ -379,7 +388,7 @@ static void* AP_taskFxn(void *arg0) {
 
 				do {
 					curEvent = 0;
-					mq_receive(apQueueRec, (void*) &curEvent, sizeof(uint32_t), &prio);
+					mq_receive(apQueueRec, (char*) &curEvent, sizeof(uint32_t), &prio);
 
 					if ((curEvent != AP_EVT_CONN_TERM) && (curEvent != AP_EVT_ADV_ENB)) {
 						Display_printf(displayOut, 0, 0, "[bleThread] Warning! Unexpected Event %lu", curEvent);
@@ -398,7 +407,7 @@ static void* AP_taskFxn(void *arg0) {
 
 				do {
 					curEvent = 0;
-					mq_receive(apQueueRec, (void*) &curEvent, sizeof(uint32_t), &prio);
+					mq_receive(apQueueRec, (char*) &curEvent, sizeof(uint32_t), &prio);
 
 					if (curEvent != AP_EVT_ADV_END) {
 						Display_printf(displayOut, 0, 0, "[bleThread] Warning! Unexpected Event %lu", curEvent);
@@ -416,7 +425,7 @@ static void* AP_taskFxn(void *arg0) {
 				/* Key Press triggers state change from idle */
 				do {
 					curEvent = 0;
-					mq_receive(apQueueRec, (void*) &curEvent, sizeof(uint32_t), &prio);
+					mq_receive(apQueueRec, (char*) &curEvent, sizeof(uint32_t), &prio);
 
 					if ((curEvent != AP_EVT_BUTTON_RIGHT) && (curEvent != AP_EVT_BSL_BUTTON)) {
 						Display_printf(displayOut, 0, 0, "[bleThread] Warning! Unexpected Event %lu", curEvent);
@@ -516,17 +525,16 @@ static void* AP_notifyTask(void *arg0) {
  * @return  None.
  ******************************************************************************/
 static void AP_initServices(void) {
-	uint8_t charValue1 = 1;
-	uint8_t charValue2 = 2;
-	uint8_t charValue3 = 3;
 
-	SimpleProfile_SetParameter(SP_CHAR1_ID, sizeof(uint8_t), &charValue1);
-	SimpleProfile_SetParameter(SP_CHAR2_ID, sizeof(uint8_t), &charValue2);
-	SimpleProfile_SetParameter(SP_CHAR3_ID, sizeof(uint8_t), &charValue3);
-	SimpleProfile_SetParameter(SP_CHAR4_ID, sizeof(uint8_t), &char4);
 
 	/* Add the SimpleProfile Service to the SNP. */
-	SimpleProfile_AddService();
+	hidService_AddService();
+
+	DevInfo_AddService();
+	Batt_AddService();
+	ScanParam_AddService();
+
+
 	SAP_registerEventCB(AP_processSNPEventCB, 0xFFFF);
 }
 
@@ -547,7 +555,7 @@ static void AP_processSNPEventCB(uint16_t event, snpEventParam_t *param) {
 
 			/* Notify state machine of established connection */
 			eventPend = AP_EVT_CONN_EST;
-			mq_send(apQueueSend, (void*) &eventPend, sizeof(uint32_t), 1);
+			mq_send(apQueueSend, (char*) &eventPend, sizeof(uint32_t), 1);
 		}
 			break;
 
@@ -556,7 +564,7 @@ static void AP_processSNPEventCB(uint16_t event, snpEventParam_t *param) {
 
 			/* Notify state machine of disconnection event */
 			eventPend = AP_EVT_CONN_TERM;
-			mq_send(apQueueSend, (void*) &eventPend, sizeof(uint32_t), 1);
+			mq_send(apQueueSend, (char*) &eventPend, sizeof(uint32_t), 1);
 		}
 			break;
 
@@ -565,10 +573,10 @@ static void AP_processSNPEventCB(uint16_t event, snpEventParam_t *param) {
 			if (advEvt->status == SNP_SUCCESS) {
 				/* Notify state machine of Advertisement Enabled */
 				eventPend = AP_EVT_ADV_ENB;
-				mq_send(apQueueSend, (void*) &eventPend, sizeof(uint32_t), 1);
+				mq_send(apQueueSend, (char*) &eventPend, sizeof(uint32_t), 1);
 			} else {
 				eventPend = AP_ERROR;
-				mq_send(apQueueSend, (void*) &eventPend, sizeof(uint32_t), 1);
+				mq_send(apQueueSend, (char*) &eventPend, sizeof(uint32_t), 1);
 			}
 		}
 			break;
@@ -578,7 +586,7 @@ static void AP_processSNPEventCB(uint16_t event, snpEventParam_t *param) {
 			if (advEvt->status == SNP_SUCCESS) {
 				/* Notify state machine of Advertisement Disabled */
 				eventPend = AP_EVT_ADV_END;
-				mq_send(apQueueSend, (void*) &eventPend, sizeof(uint32_t), 1);
+				mq_send(apQueueSend, (char*) &eventPend, sizeof(uint32_t), 1);
 			}
 		}
 			break;
@@ -601,7 +609,7 @@ static void AP_asyncCB(uint8_t cmd1, void *pParams) {
 				case SNP_POWER_UP_IND:
 					/* Notify state machine of Power Up Indication */
 					eventPend = AP_EVT_PUI;
-					mq_send(apQueueSend, (void*) &eventPend, sizeof(uint32_t), 1);
+					mq_send(apQueueSend, (char*) &eventPend, sizeof(uint32_t), 1);
 					break;
 
 				case SNP_HCI_CMD_RSP: {
@@ -631,33 +639,7 @@ static void AP_asyncCB(uint8_t cmd1, void *pParams) {
 	}
 }
 
-/*******************************************************************************
- * @fn      AP_bslKeyHandler
- *
- * @brief   event handler function to notify the app to program the SNP
- *
- * @param   none
- *
- * @return  none
- ******************************************************************************/
-void AP_bslKeyHandler(void) {
-	uint32_t eventPend;
-	uint32_t delayDebounce = 0;
 
-	GPIO_disableInt(Board_BUTTON1);
-
-	/* Delay for switch debounce */
-	for (delayDebounce = 0; delayDebounce < 20000; delayDebounce++)
-		;
-
-	GPIO_clearInt(Board_BUTTON1);
-	GPIO_enableInt(Board_BUTTON1);
-
-	GPIO_toggle(Board_LED1);
-
-	eventPend = AP_EVT_BSL_BUTTON;
-	mq_send(apQueueSend, (void*) &eventPend, sizeof(uint32_t), 1);
-}
 
 /*******************************************************************************
  * @fn      AP_keyHandler
@@ -675,14 +657,13 @@ void AP_keyHandler(void) {
 	GPIO_disableInt(Board_BUTTON0);
 
 	/* Delay for switch debounce */
-	for (ii = 0; ii < 20000; ii++)
-		;
+	for (ii = 0; ii < 20000; ii++);
 
 	GPIO_clearInt(Board_BUTTON0);
 	GPIO_enableInt(Board_BUTTON0);
 
 	eventPend = AP_EVT_BUTTON_RIGHT;
-	mq_send(apQueueSend, (void*) &eventPend, sizeof(uint32_t), 1);
+	mq_send(apQueueSend, (char*) &eventPend, sizeof(uint32_t), 1);
 }
 
 static void AP_timerHandler(Timer_Handle handle) {
