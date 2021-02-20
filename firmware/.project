@@ -4,7 +4,6 @@
 	<comment></comment>
 	<projects>
 		<project>tirtos_builds_MSP_EXP432P401R_release_ccs</project>
-		<project>TI_RTOS</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
@@ -18,6 +17,11 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.cdt.codan.core.codanBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.rtsc.xdctools.buildDefinitions.XDC.xdcNature</nature>
@@ -26,6 +30,7 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.core.ccnature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
+		<nature>org.eclipse.cdt.codan.core.codanNature</nature>
 	</natures>
 	<linkedResources>
 		<link>

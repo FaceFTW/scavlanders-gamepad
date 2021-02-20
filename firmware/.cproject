@@ -26,7 +26,7 @@
 								<listOptionValue builtIn="false" value="RUNTIME_SUPPORT_LIBRARY=libc.a"/>
 								<listOptionValue builtIn="false" value="XDC_VERSION=3.61.2.27_core"/>
 								<listOptionValue builtIn="false" value="PRODUCTS=com.ti.SIMPLELINK_MSP432E4_SDK:3.20.0.10;com.ti.SIMPLELINK_MSP432_SDK:3.40.1.02;com.ti.SIMPLELINK_SDK_BLE_PLUGIN:3.20.0.24;"/>
-								<listOptionValue builtIn="false" value="PRODUCT_MACRO_IMPORTS={&quot;com.ti.SIMPLELINK_MSP432E4_SDK&quot;:[&quot;${COM_TI_SIMPLELINK_MSP432E4_SDK_INCLUDE_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432E4_SDK_LIBRARY_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432E4_SDK_LIBRARIES}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432E4_SDK_SYMBOLS}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432E4_SDK_SYSCONFIG_MANIFEST}&quot;],&quot;com.ti.SIMPLELINK_MSP432_SDK&quot;:[&quot;${COM_TI_SIMPLELINK_MSP432_SDK_INCLUDE_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432_SDK_LIBRARY_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432_SDK_LIBRARIES}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432_SDK_SYMBOLS}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432_SDK_SYSCONFIG_MANIFEST}&quot;],&quot;com.ti.SIMPLELINK_SDK_BLE_PLUGIN&quot;:[&quot;${COM_TI_SIMPLELINK_SDK_BLE_PLUGIN_INCLUDE_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_SDK_BLE_PLUGIN_LIBRARY_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_SDK_BLE_PLUGIN_LIBRARIES}&quot;,&quot;${COM_TI_SIMPLELINK_SDK_BLE_PLUGIN_SYMBOLS}&quot;,&quot;${COM_TI_SIMPLELINK_SDK_BLE_PLUGIN_SYSCONFIG_MANIFEST}&quot;],&quot;${INHERITED}&quot;:[&quot;${INHERITED_INCLUDE_PATH}&quot;,&quot;${INHERITED_LIBRARY_PATH}&quot;,&quot;${INHERITED_LIBRARIES}&quot;,&quot;${INHERITED_SYMBOLS}&quot;,&quot;${INHERITED_SYSCONFIG_MANIFESTS}&quot;]}"/>
+								<listOptionValue builtIn="false" value="PRODUCT_MACRO_IMPORTS={&quot;com.ti.SIMPLELINK_MSP432E4_SDK&quot;:[&quot;${COM_TI_SIMPLELINK_MSP432E4_SDK_INCLUDE_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432E4_SDK_LIBRARY_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432E4_SDK_LIBRARIES}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432E4_SDK_SYMBOLS}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432E4_SDK_SYSCONFIG_MANIFEST}&quot;],&quot;com.ti.SIMPLELINK_MSP432_SDK&quot;:[&quot;${COM_TI_SIMPLELINK_MSP432_SDK_INCLUDE_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432_SDK_LIBRARY_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432_SDK_LIBRARIES}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432_SDK_SYMBOLS}&quot;,&quot;${COM_TI_SIMPLELINK_MSP432_SDK_SYSCONFIG_MANIFEST}&quot;],&quot;com.ti.SIMPLELINK_SDK_BLE_PLUGIN&quot;:[&quot;${COM_TI_SIMPLELINK_SDK_BLE_PLUGIN_INCLUDE_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_SDK_BLE_PLUGIN_LIBRARY_PATH}&quot;,&quot;${COM_TI_SIMPLELINK_SDK_BLE_PLUGIN_LIBRARIES}&quot;,&quot;${COM_TI_SIMPLELINK_SDK_BLE_PLUGIN_SYMBOLS}&quot;,&quot;${COM_TI_SIMPLELINK_SDK_BLE_PLUGIN_SYSCONFIG_MANIFEST}&quot;]}"/>
 								<listOptionValue builtIn="false" value="INACTIVE_REPOS="/>
 								<listOptionValue builtIn="false" value="EXPANDED_REPOS="/>
 								<listOptionValue builtIn="false" value="CCS_MBS_VERSION=6.1.3"/>
@@ -125,7 +125,7 @@
 								<option id="com.ti.rtsc.buildDefinitions.XDC_3.16.tool.CODEGEN_TOOL_DIR.776615591" name="Compiler tools directory (-c)" superClass="com.ti.rtsc.buildDefinitions.XDC_3.16.tool.CODEGEN_TOOL_DIR" value="${CG_TOOL_ROOT}" valueType="string"/>
 								<option id="com.ti.rtsc.buildDefinitions.XDC_3.16.tool.PLATFORM.387497159" name="Platform (-p)" superClass="com.ti.rtsc.buildDefinitions.XDC_3.16.tool.PLATFORM" value="ti.platforms.msp432:MSP432P401R" valueType="string"/>
 								<option id="com.ti.rtsc.buildDefinitions.XDC_3.16.tool.PLATFORM_RAW.543378824" name="Platform (-p)" superClass="com.ti.rtsc.buildDefinitions.XDC_3.16.tool.PLATFORM_RAW" value="ti.platforms.msp432:$DeviceId$" valueType="string"/>
-								<option id="com.ti.rtsc.buildDefinitions.XDC_3.16.tool.BUILD_CONFIGURATION_FILE.1617591001" superClass="com.ti.rtsc.buildDefinitions.XDC_3.16.tool.BUILD_CONFIGURATION_FILE" value="${workspace_loc:/TI_RTOS/release.cfg}" valueType="string"/>
+								<option id="com.ti.rtsc.buildDefinitions.XDC_3.16.tool.BUILD_CONFIGURATION_FILE.1617591001" name="Build configuration file (-b)" superClass="com.ti.rtsc.buildDefinitions.XDC_3.16.tool.BUILD_CONFIGURATION_FILE" value="" valueType="string"/>
 							</tool>
 						</toolChain>
 					</folderInfo>
@@ -134,9 +134,7 @@
 					</sourceEntries>
 				</configuration>
 			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.core.externalSettings">
-				<externalSettings containerId="TI_RTOS;com.ti.ccstudio.buildDefinitions.MSP432.Debug.225693024" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
-			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 		</cconfiguration>
 		<cconfiguration id="com.ti.ccstudio.buildDefinitions.MSP432.Release.171707154">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.ti.ccstudio.buildDefinitions.MSP432.Release.171707154" moduleId="org.eclipse.cdt.core.settings" name="Release">

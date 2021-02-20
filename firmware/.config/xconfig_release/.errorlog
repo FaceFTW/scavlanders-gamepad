@@ -1,0 +1,5 @@
+js: "D:/GDrive/ECE230/scavlanders-gamepad/TI_RTOS/release.cfg", line 42: XDC runtime error: ti.sysbios.knl.Clock: no element named 'tickPeriod'
+    "./config.bld", line 4
+js: "D:/GDrive/ECE230/scavlanders-gamepad/TI_RTOS/release.cfg", line 42: XDC runtime error: ti.sysbios.knl.Clock: no element named 'tickPeriod'
+    "./config.bld", line 4
+gmake.exe: *** No rule to make target 'package.mak', needed by '.interfaces'.  Stop.

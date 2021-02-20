@@ -11,16 +11,16 @@ var makeAssembly = false;
 var Executable = xdc.module('xdc.bld.Executable');
 
 var exeOpts = new Executable.Attrs({
-        cfgScript: 'D:/GDrive/ECE230/scavlanders-gamepad/firmware/firmware.cfg',
+        cfgScript: 'D:/GDrive/ECE230/scavlanders-gamepad/firmware/release.cfg',
         profile: 'release',
-        cfgHome: 'xconfig_firmware',
+        cfgHome: 'xconfig_release',
 });
 
 exeOpts.cfgArgs = 'null';
 exeOpts.cfgArgsEncoded = true;
 
 var exe = Pkg[makeAssembly ? 'addAssembly': 'addExecutable'](
-    'firmware',
+    'release',
     targ,
     platform,
     exeOpts
@@ -40,10 +40,10 @@ else {
 }
 
 var thisObj = {
-    cfg:        'D:/GDrive/ECE230/scavlanders-gamepad/firmware/firmware.cfg',
-    outputPath: 'D:/GDrive/ECE230/scavlanders-gamepad/firmware/.config/xconfig_firmware',
-    exeName:    'firmware' + suffix,
-    exeIntName: 'firmware' + suffix.replace('.', '_'),
+    cfg:        'D:/GDrive/ECE230/scavlanders-gamepad/firmware/release.cfg',
+    outputPath: 'D:/GDrive/ECE230/scavlanders-gamepad/firmware/.config/xconfig_release',
+    exeName:    'release' + suffix,
+    exeIntName: 'release' + suffix.replace('.', '_'),
     targ:       targ,
     linkerCommandFile: 'linker.cmd',
     compilerOptFile: 'compiler.opt',
