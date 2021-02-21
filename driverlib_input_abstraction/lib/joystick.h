@@ -34,7 +34,6 @@ void init_joy(void);
 void xy_value_detect(void);
 
 
-void xy_value_print(void);
 
 
 

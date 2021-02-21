@@ -3,6 +3,7 @@ I2C LCD instructions.
 https://github.com/johnrickman/LiquidCrystal_I2C/blob/master/LiquidCrystal_I2C.cpp
 https://github.com/fm4dd/i2c-lcd
 https://www.youtube.com/watch?v=q9YC_GVHy5A // youtube i2c tutorial
+https://gist.github.com/sourceperl/5704409 // MSP430 I2C LCD
 
 
 
@@ -16,3 +17,7 @@ https://www.usb.org/hid
 https://github.com/ti-simplelink/ble_examples/tree/ble_examples-2.2 - HIDEMUKBD example
 TI-RTOS Kernel (SYS/BIOS) User Guide (Lit Num: SPRUEX3V, Date: 6/2020)
 https://www.usbmadesimple.co.uk/
+
+
+LED matrix
+https://github.com/evilbetty/msp430_max7219_ledmatrix/blob/master/main.c // MSP430 by using MAX7221

@@ -14,104 +14,128 @@
 void init_button(){
 
 
-    GPIO_setAsInputPinWithPullDownResistor(botton_port1, botton_A); // setA
-    GPIO_setAsInputPinWithPullDownResistor(botton_port1, botton_B); // setB
-    GPIO_setAsInputPinWithPullDownResistor(botton_port1, botton_X); // setX
-    GPIO_setAsInputPinWithPullDownResistor(botton_port1, botton_Y); // setY
-    GPIO_setAsInputPinWithPullDownResistor(botton_port1, botton_U); // setUp
-    GPIO_setAsInputPinWithPullDownResistor(botton_port1, botton_D); // setDown
-    GPIO_setAsInputPinWithPullDownResistor(botton_port1, botton_R); // setRight
-    GPIO_setAsInputPinWithPullDownResistor(botton_port1, botton_L); // setLeft
-    GPIO_setAsInputPinWithPullDownResistor(GPIO_PORT_P5, GPIO_PIN3); // setParing
-    GPIO_setAsInputPinWithPullDownResistor(botton_port2, botton_Sel); // setSelect
-    GPIO_setAsInputPinWithPullDownResistor(botton_port2, botton_Start); // setStart
+    MAP_CS_setReferenceOscillatorFrequency(CS_REFO_128KHZ);
+       MAP_CS_initClockSignal(CS_MCLK, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
+       MAP_CS_initClockSignal(CS_SMCLK, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_2);
+       MAP_PCM_setPowerState(PCM_AM_LF_VCORE0);
+
+       /* Configuring GPIO2.4 as peripheral output for PWM  and P6.7 for button
+        * interrupt */
+
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
+
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+       MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+
+
+       /* Configuring Timer_A to have a period of approximately 500ms and
+        * an initial duty cycle of 10% of that (3200 ticks)  */
+
+       //![Simple Timer_A Example]
+
+       /* Enabling interrupts and starting the watchdog timer */
+       MAP_Interrupt_enableInterrupt(INT_PORT1);
+
+
+       MAP_Interrupt_enableSleepOnIsrExit();
+       MAP_Interrupt_enableMaster();
 
 }
+void PORT1_IRQHandler(void){
+    uint32_t status_A = MAP_GPIO_getEnabledInterruptStatus(GPIO_PORT_P1);
+    uint32_t status_A = MAP_GPIO_getEnabledInterruptStatus(GPIO_PORT_P1);
+    uint32_t status_A = MAP_GPIO_getEnabledInterruptStatus(GPIO_PORT_P1);
 
-void get_button(){
-    int b_a, b_b, b_x, b_y, b_u, b_d, b_r, b_l, b_p, b_sel, b_start;
-    States states = null;// set the state to null
-
-        b_a = GPIO_getInputPinValue(botton_port1, botton_A); // setA
-        b_b = GPIO_getInputPinValue(botton_port1, botton_B); // setB
-        b_x = GPIO_getInputPinValue(botton_port1, botton_X); // setX
-        b_y = GPIO_getInputPinValue(botton_port1, botton_Y); // setY
-        b_u = GPIO_getInputPinValue(botton_port1, botton_U); // setUp
-        b_d = GPIO_getInputPinValue(botton_port1, botton_D); // setDown
-        b_r = GPIO_getInputPinValue(botton_port1, botton_R); // setRight
-        b_l = GPIO_getInputPinValue(botton_port1, botton_L); // setLeft
-        b_p = GPIO_getInputPinValue(GPIO_PORT_P5, GPIO_PIN7); // setParing
-        b_sel = GPIO_getInputPinValue(botton_port2, botton_Sel); // setSelect
-        b_start = GPIO_getInputPinValue(botton_port2, botton_Start); // setStart
-
-
-
-
-    if(b_a != 0){
-       //print in the console
-        states = A;
-        printf("button A is pressed");
+    // might need the configuration of the ports
+    MAP_GPIO_clearInterruptFlag(GPIO_PORT_P1, status);
+    if (status_A & GPIO_PIN1)
+    {
+        printf("button A is pressed! ");
     }
-
-    else if(b_b != 0){
-        states = B;
-        printf("button B is pressed");
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button B is pressed! ");
     }
-
-    else if(b_x != 0 ){
-        states = X;
-        printf("button X is pressed");
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button X is pressed! ");
     }
-
-    else if(b_y != 0){
-        states = Y;
-        printf("button Y is pressed");
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button Y is pressed! ");
     }
-
-    else if(b_u !=0){
-        states = U;
-        printf("button U is pressed");
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button U is pressed! ");
     }
-
-    else if( b_d !=0){
-        states = D;
-        printf("button D is pressed");
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button D is pressed! ");
     }
-
-    else if(b_r !=0){
-        states = R;
-        printf("button R is pressed");
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button R is pressed! ");
     }
-
-    else if(b_l !=0){
-        states = L;
-        printf("button L is pressed");
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button L is pressed! ");
     }
-
-
-    else if(b_p != 0){
-        states = P;
-        printf("button P is pressed");
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button P is pressed! ");
     }
-
-
-
-    else if(b_sel != 0){
-        states = Sel;
-        printf("button Sel is pressed");
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button Sel is pressed! ");
     }
-
-    else if(b_start != 0){
-        states = Start;
-        printf("button Start is pressed");
-
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button Start is pressed! ");
     }
-
-
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button trigger right is pressed! ");
+    }
+    else if (status_A & GPIO_PIN1)
+    {
+        printf("button trugger left is pressed! ");
+    }
 
 }
-
-
-
-
-

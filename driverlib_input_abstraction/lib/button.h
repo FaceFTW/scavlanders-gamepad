@@ -28,20 +28,7 @@
 #define botton_Start            GPIO_PIN2
 #define button_all              0x0007
 
-typedef enum _States{
-    A,              // 0x00 == A button
-    B,              // 0x01 == B button
-    X,              // 0x02 == X button
-    Y,              // 0x03 == Y button
-    U,              // 0x04 == U button
-    D,              // 0x05 == D button
-    R,              // 0x06 == R button
-    L,              // 0x07 == L button
-    P,              // 0x08 == P button
-    Sel,            // 0x09 == select button
-    Start,          // 0x0A == start button
-    null,           // 0x0B == no button pressed
-}States;
+
 
 /***********************************************************************
  * 						PREPROCESSOR MACROS/DEFINES					   *
