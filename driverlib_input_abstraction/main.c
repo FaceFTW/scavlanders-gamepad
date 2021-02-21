@@ -18,11 +18,10 @@
 
 #include "lib/analog_trigger.h"								//Analog Trigger Hardware Abstraction API
 #include "lib/button.h"										//Button Hardware Abstraction API
-//#include "lib/joystick.h"									//2-axis Joystick Hardware Abstraction API
-//#include "lib/lcd.h"										//LCD via I2C API
-// #include "lib/led_matrix.h"									//LED Matrix Hardware Abstraction API
+#include "lib/joystick.h"									//2-axis Joystick Hardware Abstraction API
+#include "lib/lcd.h"										//LCD via I2C API
+//#include "lib/led_matrix.h"									//LED Matrix Hardware Abstraction API
 
-States states;
 
 
 /***********************************************************************
@@ -50,8 +49,7 @@ int main(void) {
 	 * 								MAIN LOOP							   *
 	***********************************************************************/
 	while (1) {
-	    init_button();
-	    get_button();
+
 	    while((SysTick_CTRL_COUNTFLAG_Msk & SysTick-> CTRL) == 0){
 
 	    }
