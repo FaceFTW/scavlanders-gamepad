@@ -54,6 +54,9 @@ Queue_Struct serviceMsg;				//Queue Structure for Service Messages
 Clock_Struct battPerClock;			//Clock used for Battery Service (For conformance)
 Clock_Struct idleTimeoutClock;		//Clock used for timeout checks
 
+Task_Struct hidDeviceTask;
+Char hidDeviceTaskStack[HIDDEVICE_TASK_STACK_SIZE];
+
 //Debugging Log Stream
 extern Display_Handle displayOut;
 
@@ -185,6 +188,17 @@ void AP_createTask(void) {
 	if (retc != 0) {
 		while (1);
 	}
+
+	//TODO Hid CODE
+	Task_Params taskParams;
+
+// Configure task.
+	Task_Params_init(&taskParams);
+	taskParams.stack = hidDeviceTaskStack;
+	taskParams.stackSize = HIDDEVICE_TASK_STACK_SIZE;
+	taskParams.priority = HIDDEVICE_TASK_PRIORITY;
+
+	Task_construct(&hidDeviceTask, HidDev_taskFxn, &taskParams, NULL);
 }
 
 /*******************************************************************************
