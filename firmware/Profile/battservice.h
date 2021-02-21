@@ -3,7 +3,7 @@
  @file       battservice.h
 
  @brief This file contains the Battery service definitions and prototypes
-        prototypes.
+ prototypes.
 
  Group: CMCU, SCS
  Target Device: CC2640R2
@@ -18,15 +18,15 @@
  are met:
 
  *  Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
+ notice, this list of conditions and the following disclaimer.
 
  *  Redistributions in binary form must reproduce the above copyright
-    notice, this list of conditions and the following disclaimer in the
-    documentation and/or other materials provided with the distribution.
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
 
  *  Neither the name of Texas Instruments Incorporated nor the names of
-    its contributors may be used to endorse or promote products derived
-    from this software without specific prior written permission.
+ its contributors may be used to endorse or promote products derived
+ from this software without specific prior written permission.
 
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
@@ -49,17 +49,16 @@
 #define BATTSERVICE_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-/*********************************************************************
- * INCLUDES
- */
+	/*********************************************************************
+	 * INCLUDES
+	 */
 
-/*********************************************************************
- * CONSTANTS
- */
+	/*********************************************************************
+	 * CONSTANTS
+	 */
 
 // Max voltage (mV)
 #define BATT_MAX_VOLTAGE            3273
@@ -77,118 +76,93 @@ extern "C"
 // HID Report IDs for the service
 #define HID_RPT_ID_BATT_LEVEL_IN        4  // Battery Level input report ID
 
-/*********************************************************************
- * TYPEDEFS
- */
+	/*********************************************************************
+	 * TYPEDEFS
+	 */
 
 // Battery Service callback function
-typedef void (*battServiceCB_t)(uint8 event);
+	typedef void (*battServiceCB_t)(uint8 event);
 
-// Battery measure HW setup function
-typedef void (*battServiceSetupCB_t)(void);
+	/*********************************************************************
+	 * MACROS
+	 */
 
-// Battery measure HW teardown function
-typedef void (*battServiceTeardownCB_t)(void);
+	/*********************************************************************
+	 * Profile Callbacks
+	 */
 
-/*********************************************************************
- * MACROS
- */
+	/*********************************************************************
+	 * API FUNCTIONS
+	 */
 
-/*********************************************************************
- * Profile Callbacks
- */
+	/*********************************************************************
+	 * @fn      Batt_AddService
+	 *
+	 * @brief   Initializes the Battery service by registering
+	 *          GATT attributes with the GATT server.
+	 *
+	 * @return  Success or Failure
+	 */
+	extern HCI_StatusCode_t Batt_AddService(void);
 
+	/*********************************************************************
+	 * @fn      Batt_Register
+	 *
+	 * @brief   Register a callback function with the Battery Service.
+	 *
+	 * @param   pfnServiceCB - Callback function.
+	 *
+	 * @return  None.
+	 */
+	extern void Batt_Register(battServiceCB_t pfnServiceCB);
 
-/*********************************************************************
- * API FUNCTIONS
- */
+	/*********************************************************************
+	 * @fn      Batt_SetParameter
+	 *
+	 * @brief   Set a Battery Service parameter.
+	 *
+	 * @param   param - Profile parameter ID
+	 * @param   len - length of data to right
+	 * @param   value - pointer to data to write.  This is dependent on
+	 *          the parameter ID and WILL be cast to the appropriate
+	 *          data type (example: data type of uint16 will be cast to
+	 *          uint16 pointer).
+	 *
+	 * @return  HCI_StatusCode_t
+	 */
+	extern HCI_StatusCode_t Batt_SetParameter(uint8 param, uint8 len, void *value);
 
-/*********************************************************************
- * @fn      Batt_AddService
- *
- * @brief   Initializes the Battery service by registering
- *          GATT attributes with the GATT server.
- *
- * @return  Success or Failure
- */
-extern bStatus_t Batt_AddService(void);
+	/*********************************************************************
+	 * @fn      Batt_GetParameter
+	 *
+	 * @brief   Get a Battery parameter.
+	 *
+	 * @param   param - Profile parameter ID
+	 * @param   value - pointer to data to get.  This is dependent on
+	 *          the parameter ID and WILL be cast to the appropriate
+	 *          data type (example: data type of uint16 will be cast to
+	 *          uint16 pointer).
+	 *
+	 * @return  HCI_StatusCode_t
+	 */
+	extern HCI_StatusCode_t Batt_GetParameter(uint8 param, void *value);
 
-/*********************************************************************
- * @fn      Batt_Register
- *
- * @brief   Register a callback function with the Battery Service.
- *
- * @param   pfnServiceCB - Callback function.
- *
- * @return  None.
- */
-extern void Batt_Register(battServiceCB_t pfnServiceCB);
-
-/*********************************************************************
- * @fn      Batt_SetParameter
- *
- * @brief   Set a Battery Service parameter.
- *
- * @param   param - Profile parameter ID
- * @param   len - length of data to right
- * @param   value - pointer to data to write.  This is dependent on
- *          the parameter ID and WILL be cast to the appropriate
- *          data type (example: data type of uint16 will be cast to
- *          uint16 pointer).
- *
- * @return  bStatus_t
- */
-extern bStatus_t Batt_SetParameter(uint8 param, uint8 len, void *value);
-
-/*********************************************************************
- * @fn      Batt_GetParameter
- *
- * @brief   Get a Battery parameter.
- *
- * @param   param - Profile parameter ID
- * @param   value - pointer to data to get.  This is dependent on
- *          the parameter ID and WILL be cast to the appropriate
- *          data type (example: data type of uint16 will be cast to
- *          uint16 pointer).
- *
- * @return  bStatus_t
- */
-extern bStatus_t Batt_GetParameter(uint8 param, void *value);
-
-/*********************************************************************
- * @fn          Batt_MeasLevel
- *
- * @brief       Measure the battery level and update the battery
- *              level value in the service characteristics.  If
- *              the battery level-state characteristic is configured
- *              for notification and the battery level has changed
- *              since the last measurement, then a notification
- *              will be sent.
- *
- * @return      Success or Failure
- */
-extern bStatus_t Batt_MeasLevel(void);
+	/*********************************************************************
+	 * @fn          Batt_MeasLevel
+	 *
+	 * @brief       Measure the battery level and update the battery
+	 *              level value in the service characteristics.  If
+	 *              the battery level-state characteristic is configured
+	 *              for notification and the battery level has changed
+	 *              since the last measurement, then a notification
+	 *              will be sent.
+	 *
+	 * @return      Success or Failure
+	 */
+	extern HCI_StatusCode_t Batt_MeasLevel(void);
 
 /*********************************************************************
- * @fn      Batt_Setup
- *
- * @brief   Set up which ADC source is to be used. Defaults to VDD/3.
- *
- * @param   adc_ch - ADC Channel, e.g. HAL_ADC_CHN_AIN6
- * @param   minVal - max battery level
- * @param   maxVal - min battery level
- * @param   sCB - HW setup callback
- * @param   tCB - HW tear down callback
- * @param   cCB - percentage calculation callback
- *
- * @return  none.
- */
-extern void Batt_Setup(uint16 maxVal, battServiceSetupCB_t sCB,
-                       battServiceTeardownCB_t tCB);
-
-
-/*********************************************************************
-*********************************************************************/
+ *********************************************************************/
 
 #ifdef __cplusplus
 }

@@ -79,10 +79,8 @@ extern "C" {
 #ifdef HID_DEV_RPT_QUEUE_LEN
   #define HID_DEV_REPORT_Q_SIZE               (HID_DEV_RPT_QUEUE_LEN+1)
 #else
-  #define HID_DEV_REPORT_Q_SIZE               (10+1)
+#define HID_DEV_REPORT_Q_SIZE               (10+1)
 #endif
-
-
 
 	/* Advertising interval when device is discoverable
 	 * (units of 625us, 160=100ms)
@@ -101,55 +99,6 @@ extern "C" {
 	 parameter update request is enabled */
 #define DEFAULT_DESIRED_MAX_CONN_INTERVAL   800
 
-	/* AP States */
-	typedef enum {
-		AP_RESET, AP_IDLE, AP_START_ADV, AP_CONNECTED, AP_CANCEL_ADV, AP_OAD, AP_SBL
-	} ap_States_t;
-
-	/* Task configuration */
-#define AP_TASK_PRIORITY        1
-#define AP_TASK_STACK_SIZE      2048
-
-	/* Application Events */
-#define AP_NONE                 0x00000001     // No Event
-#define AP_EVT_PUI              0x00000002     // Power-Up Indication
-#define AP_EVT_ADV_ENB          0x00000004     // Advertisement Enable
-#define AP_EVT_ADV_END          0x00000008     // Advertisement Ended
-#define AP_EVT_CONN_EST         0x00000010     // Connection Established Event
-#define AP_EVT_CONN_TERM        0x00000020     // Connection Terminated Event
-#define AP_EVT_OAD_ID_REQ       0x00000040     // OAD Write Identify Request
-#define AP_EVT_OAD_BLOCK_REQ    0x00000100     // OAD Write Block Request
-#define AP_EVT_OAD_SNP_IMAGE    0x00000200     // OAD SNP Image received
-#define AP_EVT_BSL_BUTTON       0x00000400     // BSL Button - LP S2
-#define AP_EVT_BUTTON_RESET     0x00000800     // RESET
-#define AP_EVT_BUTTON_RIGHT     0x00001000     // RIGHT Button Press - LP S1
-#define AP_ERROR                0x00002000     // Error
-
-	/* How often to perform periodic event (in usec) */
-#define AP_PERIODIC_EVT_PERIOD               5000000
-#define AP_DEFAULT_CONN_HANDLE               0xFFFF
-
-	/* Company Identifier: Texas Instruments Inc. (13) */
-#define TI_COMPANY_ID                        0x000D
-#define TI_ST_DEVICE_ID                      0x03
-#define TI_ST_KEY_DATA_ID                    0x00
-
-	/*********************************************************************
-	 * TYPEDEFS
-	 */
-
-	/*********************************************************************
-	 * MACROS
-	 */
-
-	/*********************************************************************
-	 * Profile Callbacks
-	 */
-
-	/*********************************************************************
-	 * API FUNCTIONS
-	 */
-
 	/*********************************************************************
 	 * @fn      HidService_AddService
 	 *
@@ -160,8 +109,7 @@ extern "C" {
 	 *
 	 * @return  Success or Failure
 	 */
-	extern bStatus_t HidService_AddService(void);
-
+	extern HCI_StatusCodes_t HidService_AddService(void);
 
 #ifdef __cplusplus
 }

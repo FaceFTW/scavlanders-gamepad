@@ -11,9 +11,13 @@
 #include <ti/sysbios/knl/Queue.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Task.h>
+#include <ti/sap/snp.h>
+#include <ti/sap/snp_rpc.h>
+#include <ti/sap/sap.h>
 
 #include "hidservice.h"
 #include "devinfoservice.h"
+#include "battservice.h"
 #include "profile_util.h"
 #include "bt_uuid.h"
 #include "constants.h"
@@ -44,47 +48,47 @@ static uint8_t hidServiceUUID = {SNP_16BIT_UUID_SIZE, {LO_UINT16(HID_SERV_UUID),
 /**HID SERVICE ATTRIBUTE**/
 static uint8_t hidProfile_hidService = 0;
 static uint8_t hidProfile_hidService_desc[] = "HID Service";
-SAP_UserDescAttr_t hidProfile_hidService_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_hidService_desc), sizeof(hidProfile_hidService_desc), hidProfile_hidService_desc)};
+SAP_UserDescAttr_t hidProfile_hidService_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_hidService_desc), sizeof(hidProfile_hidService_desc), hidProfile_hidService_desc};
 
 /**INCLUDE BATTERY SERVICE ATTRIBUTE**/
 static uint8_t hidProfile_includeBattServ = 0;
 static uint8_t hidProfile_includeBattServ_desc[] = "Include Battery Service";
-SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc)};
+SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc};
 
 /**INCLUDE BATTERY SERVICE ATTRIBUTE**/
 static uint8_t hidProfile_infoChar = 0;
 static uint8_t hidProfile_infoChar_desc[] = "HID Information Characteristic";
-SAP_UserDescAttr_t hidProfile_infoChar_userdesc = {SNP_GATT_PERMIT_ENCRYPT_READ, sizeof(hidProfile_infoChar_desc), sizeof(hidProfile_infoChar_desc), hidProfile_infoChar_desc)};
+SAP_UserDescAttr_t hidProfile_infoChar_userdesc = {SNP_GATT_PERMIT_ENCRYPT_READ, sizeof(hidProfile_infoChar_desc), sizeof(hidProfile_infoChar_desc), hidProfile_infoChar_desc};
 
 /**INCLUDE BATTERY SERVICE ATTRIBUTE**/
 static uint8_t hidProfile_includeBattServ = 0;
 static uint8_t hidProfile_includeBattServ_desc[] = "Include Battery Service";
-SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc)};
+SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc};
 
 /**INCLUDE BATTERY SERVICE ATTRIBUTE**/
 static uint8_t hidProfile_includeBattServ = 0;
 static uint8_t hidProfile_includeBattServ_desc[] = "Include Battery Service";
-SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc)};
+SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc};
 
 /**INCLUDE BATTERY SERVICE ATTRIBUTE**/
 static uint8_t hidProfile_includeBattServ = 0;
 static uint8_t hidProfile_includeBattServ_desc[] = "Include Battery Service";
-SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc)};
+SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc};
 
 /**INCLUDE BATTERY SERVICE ATTRIBUTE**/
 static uint8_t hidProfile_includeBattServ = 0;
 static uint8_t hidProfile_includeBattServ_desc[] = "Include Battery Service";
-SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc)};
+SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc};
 
 /**INCLUDE BATTERY SERVICE ATTRIBUTE**/
 static uint8_t hidProfile_includeBattServ = 0;
 static uint8_t hidProfile_includeBattServ_desc[] = "Include Battery Service";
-SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc)};
+SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc};
 
 /**INCLUDE BATTERY SERVICE ATTRIBUTE**/
 static uint8_t hidProfile_includeBattServ = 0;
 static uint8_t hidProfile_includeBattServ_desc[] = "Include Battery Service";
-SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc)};
+SAP_UserDescAttr_t hidProfile_includeBattServ_userdesc = {SNP_GATT_PERMIT_READ, sizeof(hidProfile_includeBattServ_desc), sizeof(hidProfile_includeBattServ_desc), hidProfile_includeBattServ_desc};
 
 SAP_UserCCCDAttr_t char4CCCD = {SNP_GATT_PERMIT_READ | SNP_GATT_PERMIT_WRITE};
 
@@ -92,11 +96,11 @@ SAP_UserCCCDAttr_t char4CCCD = {SNP_GATT_PERMIT_READ | SNP_GATT_PERMIT_WRITE};
 
 static SAP_Char_t hidProfileAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] = {
 /* Characteristic 1 Value Declaration */
-{{SNP_16BIT_UUID_SIZE, simpleProfilechar1UUID}, /* UUID */
-SNP_GATT_PROP_READ | SNP_GATT_PROP_WRITE, /* Properties */
-SNP_GATT_PERMIT_READ | SNP_GATT_PERMIT_WRITE, /* Permissions */
-&char1UserDesc /* User Description */
-}, };
+{{SNP_16BIT_UUID_SIZE, hidServiceUUID}, /* UUID */
+SNP_GATT_PROP_READ, /* Properties */
+SNP_GATT_PERMIT_READ, /* Permissions */
+&hidProfile_hidService_userdesc /* User Description */
+}};
 /*********************************************************************
  * Profile Attributes - Table
  */
@@ -512,7 +516,7 @@ static uint8_t HidDev_sendNoti(uint16_t handle, uint8_t len, uint8_t *pData) {
 		noti.len = len;
 		memcpy(noti.pValue, pData, len);
 
-// Send notification
+		// Send notification
 		status = GATT_Notification(gapConnHandle, &noti, FALSE);
 		if (status != SUCCESS) {
 			GATT_bm_free((gattMsg_t*) &noti, ATT_HANDLE_VALUE_NOTI);
@@ -883,36 +887,6 @@ HCI_StatusCodes_t HidService_AddService(void) {
 	hidRptMap[0].pCccdAttr = &hidAttrTbl[HID_REPORT_KEY_IN_CCCD_IDX];
 	hidRptMap[0].mode = HID_PROTOCOL_MODE_REPORT;
 
-// LED output report
-	hidRptMap[1].id = hidReportRefLedOut[0];
-	hidRptMap[1].type = hidReportRefLedOut[1];
-	hidRptMap[1].handle = hidAttrTbl[HID_REPORT_LED_OUT_IDX].handle;
-	hidRptMap[1].pCccdAttr = NULL;
-	hidRptMap[1].mode = HID_PROTOCOL_MODE_REPORT;
-
-// Boot keyboard input report
-// Use same ID and type as key input report
-	hidRptMap[2].id = hidReportRefKeyIn[0];
-	hidRptMap[2].type = hidReportRefKeyIn[1];
-	hidRptMap[2].handle = hidAttrTbl[HID_BOOT_KEY_IN_IDX].handle;
-	hidRptMap[2].pCccdAttr = &hidAttrTbl[HID_BOOT_KEY_IN_CCCD_IDX];
-	hidRptMap[2].mode = HID_PROTOCOL_MODE_BOOT;
-
-// Boot keyboard output report
-// Use same ID and type as LED output report
-	hidRptMap[3].id = hidReportRefLedOut[0];
-	hidRptMap[3].type = hidReportRefLedOut[1];
-	hidRptMap[3].handle = hidAttrTbl[HID_BOOT_KEY_OUT_IDX].handle;
-	hidRptMap[3].pCccdAttr = NULL;
-	hidRptMap[3].mode = HID_PROTOCOL_MODE_BOOT;
-
-// Consumer Control input report
-	hidRptMap[4].id = hidReportRefCCIn[0];
-	hidRptMap[4].type = hidReportRefCCIn[1];
-	hidRptMap[4].handle = hidAttrTbl[HID_REPORT_CC_IN_IDX].handle;
-	hidRptMap[4].pCccdAttr = &hidAttrTbl[HID_REPORT_CC_IN_CCCD_IDX];
-	hidRptMap[4].mode = HID_PROTOCOL_MODE_REPORT;
-
 // Battery level input report
 	void Batt_GetParameter(BATT_PARAM_BATT_LEVEL_IN_REPORT, &(hidRptMap[2]));
 
@@ -986,11 +960,11 @@ uint32_t Hid_SetParameter(uint8 id, uint8 type, uint16 uuid, uint8 len, void *pV
  *
  * @return  GATT status code.
  */
-uint8 Hid_GetParameter(uint8 id, uint8 type, uint16 uuid, uint8 *pLen, void *pValue) {
+uint8_t Hid_GetParameter(uint8 id, uint8 type, uint16 uuid, uint8 *pLen, void *pValue) {
 	switch (uuid) {
 		case REPORT_UUID:
 			if (type == HID_REPORT_TYPE_OUTPUT) {
-				*((uint8*) pValue) = hidReportLedOut;
+				*((uint8_t*) pValue) = hidReportLedOut;
 				*pLen = 1;
 			} else {
 				*pLen = 0;
@@ -998,7 +972,7 @@ uint8 Hid_GetParameter(uint8 id, uint8 type, uint16 uuid, uint8 *pLen, void *pVa
 			break;
 
 		case BOOT_KEY_OUTPUT_UUID:
-			*((uint8*) pValue) = hidReportBootKeyOut;
+			*((uint8_t*) pValue) = hidReportBootKeyOut;
 			*pLen = 1;
 			break;
 

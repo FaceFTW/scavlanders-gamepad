@@ -52,7 +52,6 @@
 #include <xdc/std.h>
 #include <stdbool.h>
 
-
 #include "hidservice.h"
 #include "battservice.h"
 #include "profile_util.h"
@@ -69,7 +68,6 @@
 
 #define BATT_LEVEL_VALUE_IDX        2 // Position of battery level in attribute array
 #define BATT_LEVEL_VALUE_CCCD_IDX   3 // Position of battery level CCCD in attribute array
-
 #define BATT_LEVEL_VALUE_LEN        1
 
 /**
@@ -171,8 +169,8 @@ static gattAttribute_t battAttrTbl[] = {
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-static bStatus_t battReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8 method);
-static bStatus_t battWriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8 method);
+static HCI_StatusCode_t battReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8 method);
+static HCI_StatusCode_t battWriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8 method);
 
 static void battNotify(uint16_t connHandle);
 static uint8_t battMeasure(void);
@@ -206,7 +204,7 @@ CONST gattServiceCBs_t battCBs = {battReadAttrCB,  // Read callback function poi
  *
  * @return  Success or Failure
  */
-bStatus_t Batt_AddService(void) {
+HCI_StatusCode_t Batt_AddService(void) {
 	uint8_t status;
 
 	// Allocate Client Characteristic Configuration table
@@ -252,10 +250,10 @@ extern void Batt_Register(battServiceCB_t pfnServiceCB) {
  *          data type (example: data type of uint16_t will be cast to
  *          uint16_t pointer).
  *
- * @return  bStatus_t
+ * @return  HCI_StatusCode_t
  */
-bStatus_t Batt_SetParameter(uint8_t param, uint8_t len, void *value) {
-	bStatus_t ret = SUCCESS;
+HCI_StatusCode_t Batt_SetParameter(uint8_t param, uint8_t len, void *value) {
+	HCI_StatusCode_t ret = SUCCESS;
 
 	switch (param) {
 		case BATT_PARAM_CRITICAL_LEVEL:
@@ -286,10 +284,10 @@ bStatus_t Batt_SetParameter(uint8_t param, uint8_t len, void *value) {
  *          data type (example: data type of uint16_t will be cast to
  *          uint16_t pointer).
  *
- * @return  bStatus_t
+ * @return  HCI_StatusCode_t
  */
-bStatus_t Batt_GetParameter(uint8_t param, void *value) {
-	bStatus_t ret = SUCCESS;
+HCI_StatusCode_t Batt_GetParameter(uint8_t param, void *value) {
+	HCI_StatusCode_t ret = SUCCESS;
 	switch (param) {
 		case BATT_PARAM_LEVEL:
 			*((uint8*) value) = battLevel;
@@ -334,10 +332,8 @@ bStatus_t Batt_GetParameter(uint8_t param, void *value) {
  *
  * @return      Success
  */
-bStatus_t Batt_MeasLevel(void) {
-	uint16_t level;
-
-	level = battMeasure();
+HCI_StatusCode_t Batt_MeasLevel(void) {
+	uint16_t level = 100;	//Intentionally constant as device has no independent power source
 
 	// If level has gone down
 	if (level < battLevel) {
@@ -349,26 +345,6 @@ bStatus_t Batt_MeasLevel(void) {
 	}
 
 	return SUCCESS;
-}
-
-/*********************************************************************
- * @fn      Batt_Setup
- *
- * @brief   Set up which ADC source is to be used. Defaults to VDD/3.
- *
- * @param   adc_ch - ADC Channel, e.g. HAL_ADC_CHN_AIN6
- * @param   minVal - max battery level
- * @param   maxVal - min battery level
- * @param   sCB - HW setup callback
- * @param   tCB - HW tear down callback
- * @param   cCB - percentage calculation callback
- *
- * @return  none.
- */
-void Batt_Setup(uint16_t maxVal, battServiceSetupCB_t sCB, battServiceTeardownCB_t tCB) {
-	battMaxLevel = maxVal;
-	battServiceSetupCB = sCB;
-	battServiceTeardownCB = tCB;
 }
 
 /*********************************************************************
@@ -386,8 +362,8 @@ void Batt_Setup(uint16_t maxVal, battServiceSetupCB_t sCB, battServiceTeardownCB
  *
  * @return      SUCCESS, blePending or Failure
  */
-static bStatus_t battReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8 method) {
-	bStatus_t status = SUCCESS;
+static HCI_StatusCode_t battReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8 method) {
+	HCI_StatusCode_t status = SUCCESS;
 
 	// Make sure it's not a blob operation (no attributes in the profile are long)
 	if (offset > 0) {
@@ -434,8 +410,8 @@ static bStatus_t battReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uin
  *
  * @return  SUCCESS, blePending or Failure
  */
-static bStatus_t battWriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8 method) {
-	bStatus_t status = SUCCESS;
+static HCI_StatusCode_t battWriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8 method) {
+	HCI_StatusCode_t status = SUCCESS;
 
 	uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
 	switch (uuid) {
