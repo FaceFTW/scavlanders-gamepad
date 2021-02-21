@@ -28,10 +28,8 @@
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Task.h>
 
-
 #include <ti/sap/sap.h>							//TI Simple Application Proessor (SAP) Library
-#include <ti/sbl/sbl.h>							//TI Serial BootLoader (SBL) Library
-#include <ti/sbl/sbl_image.h>					//TI SBL Image Binary Definition
+
 
 /* Local Includes */
 #include "simple_application_processor.h"
@@ -41,8 +39,6 @@
 #include "platform.h"
 #include "Profile/hidservice.h"
 #include "Profile/devinfoservice.h"
-
-
 
 /***********************************************************************
  * 						 VARIABLE DECLARATIONS
@@ -132,6 +128,20 @@ static void AP_SPWriteCB(uint8_t charID);
 static void AP_SPcccdCB(uint8_t charID, uint16_t value);
 static BLEProfileCallbacks_t simpleCBs = {AP_SPWriteCB, AP_SPcccdCB};
 
+static void HidDev_passcodeCB(uint8_t *deviceAddr, uint16_t connectionHandle, uint8_t uiInputs, uint8_t uiOutputs);
+static void HidDev_processPasscodeEvt(uint8_t *deviceAddr, uint16_t connectionHandle, uint8_t uiInputs, uint8_t uiOutputs);
+
+// Battery events.
+static void HidDev_batteryCB(uint8_t event);
+static void HidDev_processBatteryEvt(uint8_t event);
+static void HidDev_battPeriodicTask(void);
+
+// Scan parameter events.
+static void HidDev_scanParamCB(uint8_t event);
+
+// Process reconnection delay
+static void HidDev_reportReadyClockCB(UArg a0);
+
 /*******************************************************************************
  *                        PUBLIC FUNCTIONS
  ******************************************************************************/
@@ -190,6 +200,40 @@ void AP_createTask(void) {
  * @return  None.
  *******************************************(**********************************/
 static void AP_init(void) {
+
+	//Initialize and Configure Parameter varaibles for system objects
+	Clock_Params battClockParams;
+	Clock_Params reportRdyClockParams;
+
+	Clock_Params_init(&battClockParams);
+	battClockParams.arg = HID_BATT_PERIODIC_EVT;
+	battClockParams.period = 0;
+	battClockParams.startFlag = false;
+	uint32_t battClockTicks = DEFAULT_BATT_PERIOD * (1000 / Clock_tickPeriod);
+	Clock_Params_init(&reportRdyClockParams);
+	reportRdyClockParams.arg = NULL;
+	reportRdyClockParams.period = 0;
+	reportRdyClockParams.startFlag = false;
+	uint32_t reportRdyClockTicks = HID_REPORT_READY_TIME * (1000 / Clock_tickPeriod);
+
+	// Create an RTOS queue for message from profile to be sent to app.
+	serviceQueue = Queue_construct(&serviceMsg, NULL);
+
+	// Create one-shot clocks for internal periodic events.
+	Clock_construct(&battPerClock, HidDev_clockHandler, battClockTicks, &battClockParams);
+
+	// Set up services.
+	GGS_AddService (GATT_ALL_SERVICES);        // GAP
+	GATTServApp_AddService(GATT_ALL_SERVICES);        // GATT attributes
+
+	// Register for Battery service callback.
+	Batt_Register (HidDev_batteryCB);
+
+	// Register for Scan Parameters service callback.
+	ScanParam_Register (HidDev_scanParamCB);
+
+	// Initialize report ready clock timer
+	Clock_construct(&reportReadyClock, HidDev_reportReadyClockCB, reportRdyClockTicks, &reportRdyClockParams);
 	Timer_Params params;
 	struct mq_attr attr;
 
@@ -247,9 +291,7 @@ static void* AP_taskFxn(void *arg0) {
 	uint8_t disableAdv = 0;
 	uint32_t curEvent = 0;
 	uint32_t prio = 0;
-	uint8_t sblStatus;
-	SBL_Params params;
-	SBL_Image image;
+
 
 	/* Initialize application */
 	AP_init();
@@ -258,6 +300,82 @@ static void* AP_taskFxn(void *arg0) {
 
 	/* Application main loop */
 	while (1) {
+		//HID CODE
+		uint32_t events;
+
+		events = Event_pend(syncEvent, Event_Id_NONE, HID_ALL_EVENTS, ICALL_TIMEOUT_FOREVER);
+
+		if (events) {
+			ICall_EntityID dest;
+			ICall_ServiceEnum src;
+			ICall_HciExtEvt *pMsg = NULL;
+
+			if (ICall_fetchServiceMsg(&src, &dest, (void**) &pMsg) == ICALL_ERRNO_SUCCESS) {
+				if ((src == ICALL_SERVICE_CLASS_BLE) && (dest == selfEntity)) {
+					// Process inter-task message.
+					HidDev_processStackMsg((ICall_Hdr*) pMsg);
+				}
+
+				if (pMsg) {
+					freeMsg(pMsg);
+				}
+			}
+
+			// If RTOS queue is not empty, process app message.
+			if (events & HID_QUEUE_EVT) {
+				while (!Queue_empty(appMsgQueue)) {
+					hidDevEvt_t *pMsg = (hidDevEvt_t*) Util_dequeueMsg(appMsgQueue);
+					if (pMsg) {
+						// Process message.
+						HidDev_processAppMsg(pMsg);
+
+						// Free the space from the message.
+						free(pMsg);
+					}
+				}
+			}
+
+			// Idle timeout.
+			if (events & HID_IDLE_EVT) {
+				if (hidDevGapState == GAPROLE_CONNECTED) {
+					// If pairing in progress then restart timer.
+					if (hidDevPairingStarted) {
+						HidDev_StartIdleTimer();
+					}
+					// Else disconnect and don't allow reports to be sent
+					else {
+						hidDevReportReadyState = FALSE;
+						GAPRole_TerminateConnection();
+					}
+				}
+			}
+
+			// Battery periodic event.
+			if (events & HID_BATT_PERIODIC_EVT) {
+				HidDev_battPeriodicTask();
+			}
+
+			// Send HID report event.
+			if (events & HID_SEND_REPORT_EVT) {
+				// If connection is secure
+				if (hidDevConnSecure &&hidDevReportReadyState) {
+					hidDevReport_t *pReport = HidDev_dequeueReport();
+
+					if (pReport != NULL) {
+						// Send report.
+						HidDev_sendReport(pReport->id, pReport->type, pReport->len, pReport->data);
+					}
+
+					// If there is another report in the queue
+					if (!reportQEmpty()) {
+						// Set another event.
+						Event_post(syncEvent, HID_SEND_REPORT_EVT);
+					}
+				}
+			}
+		}
+
+		//OLDCODE
 		switch (state) {
 			case AP_RESET: {
 				/* Make sure CC26xx is not in BSL */
@@ -323,7 +441,6 @@ static void* AP_taskFxn(void *arg0) {
 				Display_print0(displayOut, 0, 0, "Starting advertisement... ");
 
 				SAP_setParam(SAP_PARAM_ADV, SAP_LIM_DISC_ADV_INT_MIN, HID_INITIAL_ADV_INT_MIN);
-
 
 				SAP_setServiceParam(SNP_GGS_SERV_ID, SNP_GGS_DEVICE_NAME_ATT, sizeof(snpDeviceName), snpDeviceName);	//Setting Advertising Name
 				SAP_setParam(SAP_PARAM_ADV, SAP_ADV_DATA_NOTCONN, sizeof(advertData), advertData);  					//Set advertising data.
@@ -439,51 +556,7 @@ static void* AP_taskFxn(void *arg0) {
 				}
 
 				break;
-			case AP_SBL: {
-				Display_print0(displayOut, 0, 0, "Device being set into BSL mode.");
 
-				/* Close NP so SBL can use serial port */
-				SAP_close();
-
-				/* Initialize SBL Params and open port to target device */
-				SBL_initParams(&params);
-				params.resetPinID = Board_RESET;
-				params.blPinID = Board_MRDY;
-				params.targetInterface = SBL_DEV_INTERFACE_UART;
-				params.localInterfaceID = Board_UART1;
-				SBL_open(&params);
-
-				/* Reset target and force into SBL code */
-				SBL_openTarget();
-
-				Display_print0(displayOut, 0, 0, "Programming the CC26xx... ");
-
-				/* Flash new image to target */
-				image.imgType = SBL_IMAGE_TYPE_INT;
-				image.imgInfoLocAddr = (uint32_t) &SNP_code[0];
-				image.imgLocAddr = (uint32_t) &SNP_code[0];
-				image.imgTargetAddr = SNP_IMAGE_START;
-				sblStatus = SBL_writeImage(&image);
-
-				if (sblStatus != SBL_SUCCESS) {
-					Display_print0(displayOut, 0, 0, "Programming failed!");
-				} else {
-					Display_print0(displayOut, 0, 0, "Programming passed!");
-				}
-
-				Display_print0(displayOut, 0, 0, "Resetting device.");
-
-				/* Reset target and exit SBL code */
-				SBL_closeTarget();
-
-				/* Close SBL port to target device */
-				SBL_close();
-
-				/* Regardless of successful write we must restart the SNP
-				 force reset */
-				MCU_rebootDevice();
-			}
-				break;
 			default:
 				break;
 		}
@@ -526,14 +599,12 @@ static void* AP_notifyTask(void *arg0) {
  ******************************************************************************/
 static void AP_initServices(void) {
 
-
 	/* Add the SimpleProfile Service to the SNP. */
 	hidService_AddService();
 
 	DevInfo_AddService();
 	Batt_AddService();
 	ScanParam_AddService();
-
 
 	SAP_registerEventCB(AP_processSNPEventCB, 0xFFFF);
 }
@@ -638,8 +709,6 @@ static void AP_asyncCB(uint8_t cmd1, void *pParams) {
 			break;
 	}
 }
-
-
 
 /*******************************************************************************
  * @fn      AP_keyHandler

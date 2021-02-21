@@ -68,35 +68,7 @@
 /*********************************************************************
  * GLOBAL VARIABLES
  */
-// Device information service
-const uint8_t devInfoServUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(DEVINFO_SERV_UUID), HI_UINT16(DEVINFO_SERV_UUID)};
 
-// System ID
-const uint8_t devInfoSystemIdUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(SYSTEM_ID_UUID), HI_UINT16(SYSTEM_ID_UUID)};
-
-// Model Number String
-const uint8_t devInfoModelNumberUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(MODEL_NUMBER_UUID), HI_UINT16(MODEL_NUMBER_UUID)};
-
-// Serial Number String
-const uint8_t devInfoSerialNumberUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(SERIAL_NUMBER_UUID), HI_UINT16(SERIAL_NUMBER_UUID)};
-
-// Firmware Revision String
-const uint8_t devInfoFirmwareRevUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(FIRMWARE_REV_UUID), HI_UINT16(FIRMWARE_REV_UUID)};
-
-// Hardware Revision String
-const uint8_t devInfoHardwareRevUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(HARDWARE_REV_UUID), HI_UINT16(HARDWARE_REV_UUID)};
-
-// Software Revision String
-const uint8_t devInfoSoftwareRevUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(SOFTWARE_REV_UUID), HI_UINT16(SOFTWARE_REV_UUID)};
-
-// Manufacturer Name String
-const uint8_t devInfoMfrNameUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(MANUFACTURER_NAME_UUID), HI_UINT16(MANUFACTURER_NAME_UUID)};
-
-// IEEE 11073-20601 Regulatory Certification Data List
-const uint8_t devInfo11073CertUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(IEEE_11073_CERT_DATA_UUID), HI_UINT16(IEEE_11073_CERT_DATA_UUID)};
-
-// PnP ID
-const uint8_t devInfoPnpIdUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(PNP_ID_UUID), HI_UINT16(PNP_ID_UUID)};
 
 /*********************************************************************
  * EXTERNAL VARIABLES

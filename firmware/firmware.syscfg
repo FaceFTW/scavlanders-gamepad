@@ -11,8 +11,6 @@
 const ADC    = scripting.addModule("/ti/drivers/ADC", {}, false);
 const ADC1   = ADC.addInstance();
 const ADC2   = ADC.addInstance();
-const ADC3   = ADC.addInstance();
-const ADC4   = ADC.addInstance();
 const DMA    = scripting.addModule("/ti/drivers/DMA");
 const GPIO   = scripting.addModule("/ti/drivers/GPIO");
 const GPIO1  = GPIO.addInstance();
@@ -39,35 +37,21 @@ const GPIO21 = GPIO.addInstance();
 const GPIO22 = GPIO.addInstance();
 const GPIO23 = GPIO.addInstance();
 const GPIO24 = GPIO.addInstance();
-const GPIO25 = GPIO.addInstance();
-const GPIO26 = GPIO.addInstance();
-const GPIO27 = GPIO.addInstance();
-const GPIO28 = GPIO.addInstance();
 const SPI    = scripting.addModule("/ti/drivers/SPI", {}, false);
 const SPI1   = SPI.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
  */
-ADC1.$name              = "Left_Joy_X";
 ADC1.referenceVoltage   = "External";
+ADC1.$name              = "Joy_X";
 ADC1.adc.$assign        = "ADC14";
 ADC1.adc.adcPin.$assign = "expansion.4";
 
 ADC2.referenceVoltage   = "External";
-ADC2.$name              = "Left_Joy_Y";
+ADC2.$name              = "Joy_Y";
 ADC2.adc.$assign        = "ADC14";
 ADC2.adc.adcPin.$assign = "expansion.2";
-
-ADC3.$name              = "Right_Joy_X";
-ADC3.referenceVoltage   = "External";
-ADC3.adc.$assign        = "ADC14";
-ADC3.adc.adcPin.$assign = "expansion.1";
-
-ADC4.$name              = "Right_Joy_Y";
-ADC4.referenceVoltage   = "External";
-ADC4.adc.$assign        = "ADC14";
-ADC4.adc.adcPin.$assign = "expansion.5";
 
 DMA.dmaErrorFunction = "dmaErrorHwi";
 
@@ -95,131 +79,107 @@ GPIO4.interruptTrigger = "Rising Edge";
 GPIO4.callbackFunction = "NULL";
 GPIO4.gpioPin.$assign  = "boosterpack.6";
 
-GPIO5.$name            = "Button_DPad_Up";
-GPIO5.pull             = "Pull Up";
+GPIO5.$name            = "Button_Start";
 GPIO5.interruptTrigger = "Rising Edge";
+GPIO5.pull             = "Pull Up";
 GPIO5.callbackFunction = "NULL";
-GPIO5.gpioPin.$assign  = "boosterpack.26";
+GPIO5.gpioPin.$assign  = "boosterpack.8";
 
-GPIO6.$name            = "Button_DPad_Down";
-GPIO6.pull             = "Pull Up";
+GPIO6.$name            = "Button_Select";
 GPIO6.interruptTrigger = "Rising Edge";
 GPIO6.callbackFunction = "NULL";
-GPIO6.gpioPin.$assign  = "boosterpack.27";
+GPIO6.gpioPin.$assign  = "boosterpack.28";
 
-GPIO7.$name            = "Button_DPad_Left";
+GPIO7.$name            = "Button_Pairing";
 GPIO7.pull             = "Pull Up";
 GPIO7.interruptTrigger = "Rising Edge";
 GPIO7.callbackFunction = "NULL";
-GPIO7.gpioPin.$assign  = "boosterpack.8";
+GPIO7.gpioPin.$assign  = "expansion.11";
 
-GPIO8.$name            = "Button_DPad_Right";
-GPIO8.pull             = "Pull Up";
+GPIO8.$name            = "Trigger_Left";
 GPIO8.interruptTrigger = "Rising Edge";
+GPIO8.pull             = "Pull Up";
 GPIO8.callbackFunction = "NULL";
-GPIO8.gpioPin.$assign  = "boosterpack.28";
+GPIO8.gpioPin.$assign  = "boosterpack.26";
 
-GPIO9.$name            = "Button_Start";
+GPIO9.$name            = "Trigger_Right";
 GPIO9.interruptTrigger = "Rising Edge";
 GPIO9.pull             = "Pull Up";
 GPIO9.callbackFunction = "NULL";
-GPIO9.gpioPin.$assign  = "expansion.14";
+GPIO9.gpioPin.$assign  = "boosterpack.27";
 
-GPIO10.$name            = "Button_Select";
-GPIO10.interruptTrigger = "Rising Edge";
-GPIO10.callbackFunction = "NULL";
-GPIO10.gpioPin.$assign  = "boosterpack.10";
+GPIO10.$name           = "LCD_RS";
+GPIO10.mode            = "Output";
+GPIO10.outputStrength  = "High";
+GPIO10.gpioPin.$assign = "expansion.18";
 
-GPIO11.$name            = "Button_Pairing";
-GPIO11.pull             = "Pull Up";
-GPIO11.interruptTrigger = "Rising Edge";
-GPIO11.callbackFunction = "NULL";
-GPIO11.gpioPin.$assign  = "expansion.11";
+GPIO11.$name           = "LCD_EN";
+GPIO11.mode            = "Output";
+GPIO11.outputStrength  = "High";
+GPIO11.gpioPin.$assign = "expansion.15";
 
-GPIO12.$name            = "Trigger_Left";
-GPIO12.interruptTrigger = "Rising Edge";
-GPIO12.pull             = "Pull Up";
-GPIO12.callbackFunction = "NULL";
-GPIO12.gpioPin.$assign  = "boosterpack.9";
+GPIO12.$name           = "LCD_D4";
+GPIO12.mode            = "Output";
+GPIO12.outputStrength  = "High";
+GPIO12.gpioPin.$assign = "expansion.27";
 
-GPIO13.$name            = "Trigger_Right";
-GPIO13.interruptTrigger = "Rising Edge";
-GPIO13.pull             = "Pull Up";
-GPIO13.callbackFunction = "NULL";
-GPIO13.gpioPin.$assign  = "boosterpack.36";
+GPIO13.$name           = "LCD_D5";
+GPIO13.mode            = "Output";
+GPIO13.outputStrength  = "High";
+GPIO13.gpioPin.$assign = "expansion.28";
 
-GPIO14.$name           = "LCD_RS";
+GPIO14.$name           = "LCD_D6";
 GPIO14.mode            = "Output";
 GPIO14.outputStrength  = "High";
-GPIO14.gpioPin.$assign = "expansion.18";
+GPIO14.gpioPin.$assign = "expansion.29";
 
-GPIO15.$name           = "LCD_EN";
+GPIO15.$name           = "LCD_D7";
 GPIO15.mode            = "Output";
 GPIO15.outputStrength  = "High";
-GPIO15.gpioPin.$assign = "expansion.15";
+GPIO15.gpioPin.$assign = "expansion.30";
 
-GPIO16.$name           = "LCD_D4";
-GPIO16.mode            = "Output";
-GPIO16.outputStrength  = "High";
-GPIO16.gpioPin.$assign = "expansion.27";
+GPIO16.$name              = "MSP_EXP432P401R_SRDY";
+GPIO16.mode               = "Output";
+GPIO16.outputStrength     = "High";
+GPIO16.initialOutputState = "High";
+GPIO16.gpioPin.$assign    = "boosterpack.19";
 
-GPIO17.$name           = "LCD_D5";
-GPIO17.mode            = "Output";
-GPIO17.outputStrength  = "High";
-GPIO17.gpioPin.$assign = "expansion.28";
+GPIO17.$name            = "MSP_EXP432P401R_MRDY";
+GPIO17.pull             = "Pull Up";
+GPIO17.interruptTrigger = "Rising Edge";
+GPIO17.callbackFunction = "NULL";
 
-GPIO18.$name           = "LCD_D6";
-GPIO18.mode            = "Output";
-GPIO18.outputStrength  = "High";
-GPIO18.gpioPin.$assign = "expansion.29";
+GPIO18.$name            = "MSP_EXP432P401R_SENSORBP_INT1";
+GPIO18.pull             = "Pull Down";
+GPIO18.interruptTrigger = "Rising Edge";
+GPIO18.callbackFunction = "NULL";
 
-GPIO19.$name           = "LCD_D7";
-GPIO19.mode            = "Output";
-GPIO19.outputStrength  = "High";
-GPIO19.gpioPin.$assign = "expansion.30";
+GPIO19.$name              = "MSP_EXP432P401R_SPI_CS";
+GPIO19.mode               = "Output";
+GPIO19.outputStrength     = "High";
+GPIO19.initialOutputState = "High";
 
-GPIO20.$name              = "MSP_EXP432P401R_SRDY";
-GPIO20.mode               = "Output";
-GPIO20.outputStrength     = "High";
-GPIO20.initialOutputState = "High";
-GPIO20.gpioPin.$assign    = "boosterpack.19";
+GPIO20.$hardware      = system.deviceData.board.components.LED1_RED;
+GPIO20.$name          = "MSP_EXP432P401R_LED1";
+GPIO20.outputStrength = "High";
 
-GPIO21.$name            = "MSP_EXP432P401R_MRDY";
-GPIO21.pull             = "Pull Up";
-GPIO21.interruptTrigger = "Rising Edge";
-GPIO21.callbackFunction = "NULL";
+GPIO21.$hardware      = system.deviceData.board.components.LED2_RED;
+GPIO21.$name          = "MSP_EXP432P401R_LED_RED";
+GPIO21.outputStrength = "High";
 
-GPIO22.$name            = "MSP_EXP432P401R_SENSORBP_INT1";
-GPIO22.pull             = "Pull Down";
-GPIO22.interruptTrigger = "Rising Edge";
-GPIO22.callbackFunction = "NULL";
+GPIO22.$hardware      = system.deviceData.board.components.LED2_GREEN;
+GPIO22.$name          = "MSP_EXP432P401R_LED_GREEN";
+GPIO22.outputStrength = "High";
 
-GPIO23.$name              = "MSP_EXP432P401R_SPI_CS";
-GPIO23.mode               = "Output";
-GPIO23.outputStrength     = "High";
-GPIO23.initialOutputState = "High";
+GPIO23.$name          = "MSP_EXP432P401R_LED_BLUE";
+GPIO23.$hardware      = system.deviceData.board.components.LED2_BLUE;
+GPIO23.outputStrength = "High";
 
-GPIO24.$hardware      = system.deviceData.board.components.LED1_RED;
-GPIO24.$name          = "MSP_EXP432P401R_LED1";
-GPIO24.outputStrength = "High";
-
-GPIO25.$hardware      = system.deviceData.board.components.LED2_RED;
-GPIO25.$name          = "MSP_EXP432P401R_LED_RED";
-GPIO25.outputStrength = "High";
-
-GPIO26.$hardware      = system.deviceData.board.components.LED2_GREEN;
-GPIO26.$name          = "MSP_EXP432P401R_LED_GREEN";
-GPIO26.outputStrength = "High";
-
-GPIO27.$name          = "MSP_EXP432P401R_LED_BLUE";
-GPIO27.$hardware      = system.deviceData.board.components.LED2_BLUE;
-GPIO27.outputStrength = "High";
-
-GPIO28.$name                         = "MSP_EXP432P401R_RESET";
-GPIO28.mode                          = "Output";
-GPIO28.outputStrength                = "High";
-GPIO28.initialOutputState            = "High";
-GPIO28.gpioPin.$assignAllowConflicts = "boosterpack.35";
+GPIO24.$name                         = "MSP_EXP432P401R_RESET";
+GPIO24.mode                          = "Output";
+GPIO24.outputStrength                = "High";
+GPIO24.initialOutputState            = "High";
+GPIO24.gpioPin.$assignAllowConflicts = "boosterpack.35";
 
 const Power                   = scripting.addModule("/ti/drivers/Power", {}, false);
 Power.performanceLevel3.$name = "ti_drivers_power_PowerMSP432PerfLevels0";
@@ -240,10 +200,10 @@ SPI1.spi.dmaInterruptNumber.$assign = "DMA_INT0";
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
-GPIO21.gpioPin.$suggestSolution = "boosterpack.15";
-GPIO22.gpioPin.$suggestSolution = "boosterpack.7";
-GPIO23.gpioPin.$suggestSolution = "boosterpack.14";
-GPIO24.gpioPin.$suggestSolution = "P1.0.GPIO/EUSCI_A0_SPI.STE";
-GPIO25.gpioPin.$suggestSolution = "P2.0.GPIO/EUSCI_A1_SPI.STE";
-GPIO26.gpioPin.$suggestSolution = "P2.1.GPIO/EUSCI_A1_SPI.CLK";
-GPIO27.gpioPin.$suggestSolution = "P2.2.GPIO/EUSCI_A1_UART.RXD/EUSCI_A1_SPI.SOMI";
+GPIO17.gpioPin.$suggestSolution = "boosterpack.15";
+GPIO18.gpioPin.$suggestSolution = "boosterpack.7";
+GPIO19.gpioPin.$suggestSolution = "boosterpack.14";
+GPIO20.gpioPin.$suggestSolution = "P1.0.GPIO/EUSCI_A0_SPI.STE";
+GPIO21.gpioPin.$suggestSolution = "P2.0.GPIO/EUSCI_A1_SPI.STE";
+GPIO22.gpioPin.$suggestSolution = "P2.1.GPIO/EUSCI_A1_SPI.CLK";
+GPIO23.gpioPin.$suggestSolution = "P2.2.GPIO/EUSCI_A1_UART.RXD/EUSCI_A1_SPI.SOMI";

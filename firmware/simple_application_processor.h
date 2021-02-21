@@ -45,13 +45,9 @@ extern "C" {
 #define AP_EVT_ADV_END          0x00000008     // Advertisement Ended
 #define AP_EVT_CONN_EST         0x00000010     // Connection Established Event
 #define AP_EVT_CONN_TERM        0x00000020     // Connection Terminated Event
-#define AP_EVT_OAD_ID_REQ       0x00000040     // OAD Write Identify Request
-#define AP_EVT_OAD_BLOCK_REQ    0x00000100     // OAD Write Block Request
-#define AP_EVT_OAD_SNP_IMAGE    0x00000200     // OAD SNP Image received
-#define AP_EVT_BSL_BUTTON       0x00000400     // BSL Button - LP S2
-#define AP_EVT_BUTTON_RESET     0x00000800     // RESET
-#define AP_EVT_BUTTON_RIGHT     0x00001000     // RIGHT Button Press - LP S1
-#define AP_ERROR                0x00002000     // Error
+#define AP_EVT_BUTTON_RESET     0x00000040     // RESET
+#define AP_EVT_BUTTON_RIGHT     0x00000080     // RIGHT Button Press - LP S1
+#define AP_ERROR                0x00000100     // Error
 
 	/* How often to perform periodic event (in usec) */
 #define AP_PERIODIC_EVT_PERIOD               5000000
@@ -65,8 +61,6 @@ extern "C" {
 	/* Task creation function for the Application Processor. */
 	extern void AP_createTask(void);
 
-	/* SNP Image */
-	extern const unsigned short SNP_code[];
 
 #ifdef __cplusplus
 }
