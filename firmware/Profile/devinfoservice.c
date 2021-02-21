@@ -226,7 +226,7 @@ static gattAttribute_t devInfoAttrTbl[] = {
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-static HCI_StatusCodes_t devInfo_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8_t method);
+static uint8_t devInfo_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8_t method);
 
 /*********************************************************************
  * PROFILE CALLBACKS
@@ -260,7 +260,7 @@ const gattServiceCBs_t devInfoCBs = {devInfo_ReadAttrCB, // Read callback functi
  *
  * @return  Success or Failure
  */
-HCI_StatusCodes_t DevInfo_AddService(void) {
+uint8_t DevInfo_AddService(void) {
 	// Register GATT attribute list and CBs with GATT Server App
 	return GATTServApp_RegisterService(devInfoAttrTbl, GATT_NUM_ATTRS(devInfoAttrTbl),
 	GATT_MAX_ENCRYPT_KEY_SIZE, &devInfoCBs);
@@ -278,10 +278,10 @@ HCI_StatusCodes_t DevInfo_AddService(void) {
  *          data type (example: data type of uint16_t will be cast to
  *          uint16_t pointer).
  *
- * @return  HCI_StatusCodes_t
+ * @return  uint8_t
  */
-HCI_StatusCodes_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) {
-	HCI_StatusCodes_t ret = SUCCESS;
+uint8_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) {
+	uint8_t ret = SUCCESS;
 
 	switch (param) {
 		case DEVINFO_SYSTEM_ID:
@@ -289,7 +289,7 @@ HCI_StatusCodes_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) 
 			if (len == sizeof(devInfoSystemId)) {
 				memcpy(devInfoSystemId, value, len);
 			} else {
-				ret = bleInvalidRange;
+				ret = BLE_PROFILE_INVALID_RANGE;
 			}
 			break;
 
@@ -299,7 +299,7 @@ HCI_StatusCodes_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) 
 				memset(devInfoModelNumber, 0, DEVINFO_STR_ATTR_LEN + 1);
 				memcpy(devInfoModelNumber, value, len);
 			} else {
-				ret = bleInvalidRange;
+				ret = BLE_PROFILE_INVALID_RANGE;
 			}
 			break;
 		case DEVINFO_SERIAL_NUMBER:
@@ -308,7 +308,7 @@ HCI_StatusCodes_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) 
 				memset(devInfoSerialNumber, 0, DEVINFO_STR_ATTR_LEN + 1);
 				memcpy(devInfoSerialNumber, value, len);
 			} else {
-				ret = bleInvalidRange;
+				ret = BLE_PROFILE_INVALID_RANGE;
 			}
 			break;
 
@@ -318,7 +318,7 @@ HCI_StatusCodes_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) 
 				memset(devInfoFirmwareRev, 0, DEVINFO_STR_ATTR_LEN + 1);
 				memcpy(devInfoFirmwareRev, value, len);
 			} else {
-				ret = bleInvalidRange;
+				ret = BLE_PROFILE_INVALID_RANGE;
 			}
 			break;
 
@@ -328,7 +328,7 @@ HCI_StatusCodes_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) 
 				memset(devInfoHardwareRev, 0, DEVINFO_STR_ATTR_LEN + 1);
 				memcpy(devInfoHardwareRev, value, len);
 			} else {
-				ret = bleInvalidRange;
+				ret = BLE_PROFILE_INVALID_RANGE;
 			}
 			break;
 
@@ -338,7 +338,7 @@ HCI_StatusCodes_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) 
 				memset(devInfoSoftwareRev, 0, DEVINFO_STR_ATTR_LEN + 1);
 				memcpy(devInfoSoftwareRev, value, len);
 			} else {
-				ret = bleInvalidRange;
+				ret = BLE_PROFILE_INVALID_RANGE;
 			}
 			break;
 
@@ -348,7 +348,7 @@ HCI_StatusCodes_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) 
 				memset(devInfoMfrName, 0, DEVINFO_STR_ATTR_LEN + 1);
 				memcpy(devInfoMfrName, value, len);
 			} else {
-				ret = bleInvalidRange;
+				ret = BLE_PROFILE_INVALID_RANGE;
 			}
 			break;
 
@@ -368,7 +368,7 @@ HCI_StatusCodes_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) 
 				devInfo11073Cert = pCert;
 				devInfo11073CertLen = len;
 			} else {
-				ret = bleMemAllocError;
+				ret = BLE_PROFILE_MEM_ALLOC_ERROR;
 			}
 		}
 			break;
@@ -378,12 +378,12 @@ HCI_StatusCodes_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) 
 			if (len == sizeof(devInfoPnpId)) {
 				memcpy(devInfoPnpId, value, len);
 			} else {
-				ret = bleInvalidRange;
+				ret = BLE_PROFILE_INVALID_RANGE;
 			}
 			break;
 
 		default:
-			ret = INVALIDPARAMETER;
+			ret = BLE_PROFILE_INVALIDPARAMETER;
 			break;
 	}
 
@@ -401,10 +401,10 @@ HCI_StatusCodes_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value) 
  *          data type (example: data type of uint16_t will be cast to
  *          uint16_t pointer).
  *
- * @return  HCI_StatusCodes_t
+ * @return  uint8_t
  */
-HCI_StatusCodes_t DevInfo_GetParameter(uint8_t param, void *value) {
-	HCI_StatusCodes_t ret = SUCCESS;
+uint8_t DevInfo_GetParameter(uint8_t param, void *value) {
+	uint8_t ret = SUCCESS;
 
 	switch (param) {
 		case DEVINFO_SYSTEM_ID:
@@ -443,7 +443,7 @@ HCI_StatusCodes_t DevInfo_GetParameter(uint8_t param, void *value) {
 			break;
 
 		default:
-			ret = INVALIDPARAMETER;
+			ret = BLE_PROFILE_INVALIDPARAMETER;
 			break;
 	}
 
@@ -465,8 +465,8 @@ HCI_StatusCodes_t DevInfo_GetParameter(uint8_t param, void *value) {
  *
  * @return      SUCCESS, blePending or Failure
  */
-static HCI_StatusCodes_t devInfo_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8_t method) {
-	HCI_StatusCodes_t status = SUCCESS;
+static uint8_t devInfo_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8_t method) {
+	uint8_t status = SUCCESS;
 	uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
 
 	// If the value offset of the Read Blob Request is greater than the
@@ -476,7 +476,7 @@ static HCI_StatusCodes_t devInfo_ReadAttrCB(uint16_t connHandle, gattAttribute_t
 		case SYSTEM_ID_UUID:
 			// verify offset
 			if (offset > sizeof(devInfoSystemId)) {
-				status = ATT_ERR_INVALID_OFFSET;
+				status = BLE_PROFILE_INVALID_MEM_SIZE;
 			} else {
 				// determine read length
 				*pLen = MIN(maxLen, (sizeof(devInfoSystemId) - offset));
@@ -486,7 +486,7 @@ static HCI_StatusCodes_t devInfo_ReadAttrCB(uint16_t connHandle, gattAttribute_t
 			}
 			break;
 
-		case MODEL_NUMBER_UUID:
+	case MODEL_NUMBER_UUID:
 		case SERIAL_NUMBER_UUID:
 		case FIRMWARE_REV_UUID:
 		case HARDWARE_REV_UUID:
@@ -496,7 +496,7 @@ static HCI_StatusCodes_t devInfo_ReadAttrCB(uint16_t connHandle, gattAttribute_t
 
 			// verify offset
 			if (offset > len) {
-				status = ATT_ERR_INVALID_OFFSET;
+				status = BLE_PROFILE_INVALID_MEM_SIZE;
 			} else {
 				// determine read length (exclude null terminating character)
 				*pLen = MIN(maxLen, (len - offset));
@@ -510,7 +510,7 @@ static HCI_StatusCodes_t devInfo_ReadAttrCB(uint16_t connHandle, gattAttribute_t
 		case IEEE_11073_CERT_DATA_UUID:
 			// verify offset
 			if (offset > devInfo11073CertLen) {
-				status = ATT_ERR_INVALID_OFFSET;
+				status = BLE_PROFILE_INVALID_MEM_SIZE;
 			} else {
 				// determine read length
 				*pLen = MIN(maxLen, (devInfo11073CertLen - offset));
@@ -523,7 +523,7 @@ static HCI_StatusCodes_t devInfo_ReadAttrCB(uint16_t connHandle, gattAttribute_t
 		case PNP_ID_UUID:
 			// verify offset
 			if (offset > sizeof(devInfoPnpId)) {
-				status = ATT_ERR_INVALID_OFFSET;
+				status = BLE_PROFILE_INVALID_MEM_SIZE;
 			} else {
 				// determine read length
 				*pLen = MIN(maxLen, (sizeof(devInfoPnpId) - offset));

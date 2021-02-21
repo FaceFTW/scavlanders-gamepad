@@ -52,6 +52,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 	/*********************************************************************
 	 * INCLUDES
 	 */
@@ -81,7 +83,7 @@ extern "C" {
 	 */
 
 // Battery Service callback function
-	typedef void (*battServiceCB_t)(uint8 event);
+	typedef void (*battServiceCB_t)(uint8_t event);
 
 	/*********************************************************************
 	 * MACROS
@@ -130,7 +132,7 @@ extern "C" {
 	 *
 	 * @return  HCI_StatusCode_t
 	 */
-	extern HCI_StatusCode_t Batt_SetParameter(uint8 param, uint8 len, void *value);
+	extern HCI_StatusCode_t Batt_SetParameter(uint8_t param, uint8_t len, void *value);
 
 	/*********************************************************************
 	 * @fn      Batt_GetParameter
@@ -145,7 +147,7 @@ extern "C" {
 	 *
 	 * @return  HCI_StatusCode_t
 	 */
-	extern HCI_StatusCode_t Batt_GetParameter(uint8 param, void *value);
+	extern HCI_StatusCode_t Batt_GetParameter(uint8_t param, void *value);
 
 	/*********************************************************************
 	 * @fn          Batt_MeasLevel

@@ -6,7 +6,8 @@
  * \copyright 	See LICENSE
  ***********************************************************************/
 #include <stdint.h>
-//#include <ti/ble5stack/central/gatt.h>
+#include <stddef.h>
+#include <ti/ble5stack/central/gatt.h>
 #include <ti/sysbios/knl/Semaphore.h>
 #include <ti/sysbios/knl/Queue.h>
 #include <ti/sysbios/knl/Clock.h>
@@ -95,12 +96,31 @@ SAP_UserCCCDAttr_t char4CCCD = {SNP_GATT_PERMIT_READ | SNP_GATT_PERMIT_WRITE};
 #define SERVAPP_NUM_ATTR_SUPPORTED 4
 
 static SAP_Char_t hidProfileAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] = {
-/* Characteristic 1 Value Declaration */
-{{SNP_16BIT_UUID_SIZE, hidServiceUUID}, /* UUID */
-SNP_GATT_PROP_READ, /* Properties */
-SNP_GATT_PERMIT_READ, /* Permissions */
-&hidProfile_hidService_userdesc /* User Description */
-}};
+//HID Service Characteristic
+		{{SNP_16BIT_UUID_SIZE, hidServiceUUID}, /* UUID */
+		SNP_GATT_PROP_READ, /* Properties */
+		SNP_GATT_PERMIT_READ, /* Permissions */
+		&hidProfile_hidService_userdesc /* User Description */},
+		//Include Battery Service Characteristic
+		{{SNP_16BIT_UUID_SIZE, includeUUID}, /* UUID */
+		SNP_GATT_PROP_READ, /* Properties */
+		SNP_GATT_PERMIT_READ, /* Permissions */
+		&hidProfile_includeBattServ_userdesc /* User Description */},
+		//HID Information Characteristic Declaration
+		{{SNP_16BIT_UUID_SIZE, hidServiceUUID}, /* UUID */
+		SNP_GATT_PROP_READ, /* Properties */
+		SNP_GATT_PERMIT_READ, /* Permissions */
+		&hidProfile_hidService_userdesc /* User Description */},
+		//HID Service Characteristic
+		{{SNP_16BIT_UUID_SIZE, hidServiceUUID}, /* UUID */
+		SNP_GATT_PROP_READ, /* Properties */
+		SNP_GATT_PERMIT_READ, /* Permissions */
+		&hidProfile_hidService_userdesc /* User Description */},
+		//HID Service Characteristic
+		{{SNP_16BIT_UUID_SIZE, hidServiceUUID}, /* UUID */
+		SNP_GATT_PROP_READ, /* Properties */
+		SNP_GATT_PERMIT_READ, /* Permissions */
+		&hidProfile_hidService_userdesc /* User Description */}, };
 /*********************************************************************
  * Profile Attributes - Table
  */
@@ -116,23 +136,14 @@ static gattAttribute_t hidAttrTbl[] = {
 		// Included service (battery)
 		{{ATT_BT_UUID_SIZE, includeUUID}, GATT_PERMIT_READ, 0, (uint8*) &include},
 
-		// HID Information characteristic declaration
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidInfoProps},
-
 		// HID Information characteristic
 		{{ATT_BT_UUID_SIZE, hidInfoUUID}, GATT_PERMIT_ENCRYPT_READ, 0, (uint8*) hidInfo},
-
-		// HID Report Map characteristic declaration
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportMapProps},
 
 		// HID Report Map characteristic
 		{{ATT_BT_UUID_SIZE, hidReportMapUUID}, GATT_PERMIT_ENCRYPT_READ, 0, (uint8*) hidReportMap},
 
 		// HID External Report Reference Descriptor
 		{{ATT_BT_UUID_SIZE, extReportRefUUID}, GATT_PERMIT_READ, 0, hidExtReportRefDesc},
-
-		// HID Report characteristic declaration, key input
-		{{ATT_BT_UUID_SIZE, characterUUID}, GATT_PERMIT_READ, 0, &hidReportKeyInProps},
 
 		// HID Report characteristic, key input
 		{{ATT_BT_UUID_SIZE, hidReportUUID}, GATT_PERMIT_ENCRYPT_READ, 0, &hidReportKeyIn},
@@ -696,8 +707,8 @@ static void HidDev_reportReadyClockCB(UArg a0) {
  *
  * @return      SUCCESS, blePending or Failure
  */
-HCI_StatusCodes_t HidService_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8_t method) {
-	HCI_StatusCodes_t status = SUCCESS;
+uint8_t HidService_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8_t method) {
+	uint8_t status = SUCCESS;
 	hidRptMap_t *pRpt;
 
 	uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
@@ -734,9 +745,6 @@ HCI_StatusCodes_t HidService_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pA
 	} else if (uuid == GATT_REPORT_REF_UUID) {
 		*pLen = HID_REPORT_REF_LEN;
 		memcpy(pValue, pAttr->pValue, HID_REPORT_REF_LEN);
-	} else if (uuid == PROTOCOL_MODE_UUID) {
-		*pLen = HID_PROTOCOL_MODE_LEN;
-		pValue[0] = pAttr->pValue[0];
 	} else if (uuid == GATT_EXT_REPORT_REF_UUID) {
 		*pLen = HID_EXT_REPORT_REF_LEN;
 		memcpy(pValue, pAttr->pValue, HID_EXT_REPORT_REF_LEN);
@@ -764,85 +772,45 @@ HCI_StatusCodes_t HidService_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pA
  *
  * @return  SUCCESS, blePending or Failure
  */
-HCI_StatusCodes_t HidService_WriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8_t method) {
-	HCI_StatusCodes_t status = SUCCESS;
+uint8_t HidService_WriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8_t method) {
+	uint8_t status = BLE_PROFILE_SUCCESS;
 	hidRptMap_t *pRpt;
 
 // Make sure it's not a blob operation (no attributes in the profile are long).
 	if (offset > 0) {
-		return (ATT_ERR_ATTR_NOT_LONG);
+		return (BLE_PROFILE_INVALID_MEM_SIZE);
 	}
 
 	uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
 
-	if (uuid == REPORT_UUID || uuid == BOOT_KEY_OUTPUT_UUID) {
+	if (uuid == REPORT_UUID) {
 // Find report ID in table.
 		if ((pRpt = HidDev_reportByHandle(pAttr->handle)) != NULL) {
 			// Execute report callback.
 			status = (*pHidDevCB->reportCB)(pRpt->id, pRpt->type, uuid, HID_DEV_OPER_WRITE, &len, pValue);
-		}
-	} else if (uuid == HID_CTRL_PT_UUID) {
-// Validate length and value range.
-		if (len == 1) {
-			if (pValue[0] == HID_CMD_SUSPEND || pValue[0] == HID_CMD_EXIT_SUSPEND) {
-				// Execute HID app event callback.
-				(*pHidDevCB->evtCB)((pValue[0] == HID_CMD_SUSPEND) ? HID_DEV_SUSPEND_EVT : HID_DEV_EXIT_SUSPEND_EVT);
-			} else {
-				status = ATT_ERR_INVALID_VALUE;
-			}
-		} else {
-			status = ATT_ERR_INVALID_VALUE_SIZE;
-		}
-	} else if (uuid == GATT_CLIENT_CHAR_CFG_UUID) {
-		status = GATTServApp_ProcessCCCWriteReq(connHandle, pAttr, pValue, len, offset, GATT_CLIENT_CFG_NOTIFY);
-		if (status == SUCCESS) {
-			uint16_t charCfg = BUILD_UINT16(pValue[0], pValue[1]);
+		} else if (uuid == GATT_CLIENT_CHAR_CFG_UUID) {
+			status = GATTServApp_ProcessCCCWriteReq(connHandle, pAttr, pValue, len, offset, GATT_CLIENT_CFG_NOTIFY);
+			if (status == SUCCESS) {
+				uint16_t charCfg = BUILD_UINT16(pValue[0], pValue[1]);
 
-			// Find report ID in table.
-			if ((pRpt = HidDev_reportByCccdHandle(pAttr->handle)) != NULL) {
-				// Execute report callback.
-				(*pHidDevCB->reportCB)(pRpt->id, pRpt->type, uuid, (charCfg == GATT_CLIENT_CFG_NOTIFY) ? HID_DEV_OPER_ENABLE : HID_DEV_OPER_DISABLE, &len, pValue);
+				// Find report ID in table.
+				if ((pRpt = HidDev_reportByCccdHandle(pAttr->handle)) != NULL) {
+					// Execute report callback.
+					(*pHidDevCB->reportCB)(pRpt->id, pRpt->type, uuid, (charCfg == GATT_CLIENT_CFG_NOTIFY) ? HID_DEV_OPER_ENABLE : HID_DEV_OPER_DISABLE, &len, pValue);
+				}
 			}
-		}
-	} else if (uuid == PROTOCOL_MODE_UUID) {
-		if (len == HID_PROTOCOL_MODE_LEN) {
-			if (pValue[0] == HID_PROTOCOL_MODE_BOOT || pValue[0] == HID_PROTOCOL_MODE_REPORT) {
-				pAttr->pValue[0] = pValue[0];
-
-				// Execute HID app event callback.
-				(*pHidDevCB->evtCB)((pValue[0] == HID_PROTOCOL_MODE_BOOT) ? HID_DEV_SET_BOOT_EVT : HID_DEV_SET_REPORT_EVT);
-			} else {
-				status = ATT_ERR_INVALID_VALUE;
-			}
-		} else {
-			status = ATT_ERR_INVALID_VALUE_SIZE;
 		}
 	}
 
 // Restart idle timer.
-	if (status == SUCCESS) {
+	if (status == BLE_PROFILE_SUCCESS) {
 		HidDev_StartIdleTimer();
 	}
 
 	return (status);
 }
 
-/*********************************************************************
- * PROFILE CALLBACKS
- */
 
-// Service Callbacks
-// Note: When an operation on a characteristic requires authorization and
-// pfnAuthorizeAttrCB is not defined for that characteristic's service, the
-// Stack will report a status of ATT_ERR_UNLIKELY to the client.  When an
-// operation on a characteristic requires authorization the Stack will call
-// pfnAuthorizeAttrCB to check a client's authorization prior to calling
-// pfnReadAttrCB or pfnWriteAttrCB, so no checks for authorization need to be
-// made within these functions.
-const gattServiceCBs_t hidCBs = {HidService_ReadAttrCB,  // Read callback function pointer
-		HidService_WriteAttrCB, // Write callback function pointer
-		NULL                  // Authorization callback function pointer
-		};
 
 /*********************************************************************
  * PUBLIC FUNCTIONS
@@ -858,21 +826,22 @@ const gattServiceCBs_t hidCBs = {HidService_ReadAttrCB,  // Read callback functi
  *
  * @return  Success or Failure
  */
-HCI_StatusCodes_t HidService_AddService(void) {
-	uint8 status = SUCCESS;
+uint8_t HidService_AddService(void) {
+	/* Reads through table, adding attributes to the NP. */
+		hidService.serviceUUID = hidServiceUUID;
+		hidService.serviceType = SNP_PRIMARY_SERVICE;
+		hidService.charTableLen = SERVAPP_NUM_ATTR_SUPPORTED;
+		hidService.charTable = hidProfileAttrTbl;
+		hidService.context = NULL;
+		hidService.charReadCallback = HidService_ReadAttrCB;
+		hidService.charWriteCallback = HidService_WriteAttrCB;
+		hidService.cccdIndCallback = HidService_CCCDIndCB;
+		hidService.charAttrHandles = hidServiceCharHandles;
 
-// Allocate Client Charateristic Configuration tables.
-	hidReportKeyInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
-	hidReportBootKeyInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
-	hidReportCCInClientCharCfg = (gattCharCfg_t*) malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
+		/* Service is setup, register with GATT server on the SNP. */
+		SAP_registerService(&hidService);
 
-// Initialize Client Characteristic Configuration attributes
-	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportKeyInClientCharCfg);
-	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportBootKeyInClientCharCfg);
-	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, hidReportCCInClientCharCfg);
-
-// Register GATT attribute list and CBs with GATT Server App
-	status = GATTServApp_RegisterService(hidAttrTbl, GATT_NUM_ATTRS(hidAttrTbl), GATT_MAX_ENCRYPT_KEY_SIZE, &hidCBs);
+		return BLE_PROFILE_SUCCESS;
 
 // Set up included service
 	Batt_GetParameter(BATT_PARAM_SERVICE_HANDLE, &GATT_INCLUDED_HANDLE(hidAttrTbl, HID_INCLUDED_SERVICE_IDX));
@@ -888,7 +857,7 @@ HCI_StatusCodes_t HidService_AddService(void) {
 	hidRptMap[0].mode = HID_PROTOCOL_MODE_REPORT;
 
 // Battery level input report
-	void Batt_GetParameter(BATT_PARAM_BATT_LEVEL_IN_REPORT, &(hidRptMap[2]));
+	void Batt_GetParameter(BATT_PARAM_BATT_LEVEL_IN_REPORT, &(hidRptMap[1]));
 
 // Setup report ID map
 	HidDev_RegisterReports(HID_NUM_REPORTS, hidRptMap);
@@ -921,18 +890,10 @@ uint32_t Hid_SetParameter(uint8 id, uint8 type, uint16 uuid, uint8 len, void *pV
 				if (len == 1) {
 					hidReportLedOut = *((uint8*) pValue);
 				} else {
-					ret = ATT_ERR_INVALID_VALUE_SIZE;
+					ret = BLE_PROFILE_INVALID_RANGE;
 				}
 			} else {
-				ret = ATT_ERR_ATTR_NOT_FOUND;
-			}
-			break;
-
-		case BOOT_KEY_OUTPUT_UUID:
-			if (len == 1) {
-				hidReportBootKeyOut = *((uint8*) pValue);
-			} else {
-				ret = ATT_ERR_INVALID_VALUE_SIZE;
+				ret = BLE_PROFILE_INVALID_MSG_POINTER
 			}
 			break;
 
@@ -971,17 +932,12 @@ uint8_t Hid_GetParameter(uint8 id, uint8 type, uint16 uuid, uint8 *pLen, void *p
 			}
 			break;
 
-		case BOOT_KEY_OUTPUT_UUID:
-			*((uint8_t*) pValue) = hidReportBootKeyOut;
-			*pLen = 1;
-			break;
-
 		default:
 			*pLen = 0;
 			break;
 	}
 
-	return (SUCCESS);
+	return (BLE_PROFILE_SUCCESS);
 }
 
 /*********************************************************************

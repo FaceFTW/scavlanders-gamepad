@@ -51,6 +51,7 @@
 #include <string.h>
 #include <xdc/std.h>
 #include <stdbool.h>
+#include <ti/ble5stack/central/gatt.h>
 
 #include "hidservice.h"
 #include "battservice.h"
@@ -63,7 +64,7 @@
  */
 
 /*********************************************************************
- * CONSTANTS
+ * constANTS
  */
 
 #define BATT_LEVEL_VALUE_IDX        2 // Position of battery level in attribute array
@@ -83,10 +84,10 @@
  * GLOBAL VARIABLES
  */
 // Battery service
-CONST uint8_t battServUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(BATT_SERV_UUID), HI_UINT16(BATT_SERV_UUID)};
+const uint8_t battServUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(BATT_SERV_UUID), HI_UINT16(BATT_SERV_UUID)};
 
 // Battery level characteristic
-CONST uint8_t battLevelUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(BATT_LEVEL_UUID), HI_UINT16(BATT_LEVEL_UUID)};
+const uint8_t battLevelUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(BATT_LEVEL_UUID), HI_UINT16(BATT_LEVEL_UUID)};
 
 /*********************************************************************
  * EXTERNAL VARIABLES
@@ -103,8 +104,6 @@ CONST uint8_t battLevelUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(BATT_LEVEL_UUID), HI_
 // Application callback.
 static battServiceCB_t battServiceCB;
 
-// Measurement setup callback.
-static battServiceSetupCB_t battServiceSetupCB = NULL;
 
 // Critical battery level setting.
 static uint8_t battCriticalLevel;
@@ -112,15 +111,13 @@ static uint8_t battCriticalLevel;
 // Maximum battery level.
 static uint16_t battMaxLevel = BATT_MAX_VOLTAGE;
 
-// Measurement teardown callback.
-static battServiceTeardownCB_t battServiceTeardownCB = NULL;
 
 /*********************************************************************
  * Profile Attributes - variables
  */
 
 // Battery Service attribute.
-static CONST gattAttrType_t battService = {ATT_BT_UUID_SIZE, battServUUID};
+static const gattAttrType_t battService = {ATT_BT_UUID_SIZE, battServUUID};
 
 // Battery level characteristic.
 static uint8_t battLevelProps = GATT_PROP_READ | GATT_PROP_NOTIFY;
@@ -169,8 +166,8 @@ static gattAttribute_t battAttrTbl[] = {
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-static HCI_StatusCode_t battReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8 method);
-static HCI_StatusCode_t battWriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8 method);
+static uint8_t battReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8 method);
+static uint8_t battWriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8 method);
 
 static void battNotify(uint16_t connHandle);
 static uint8_t battMeasure(void);
@@ -187,7 +184,7 @@ static void battNotifyLevel(void);
 // pfnAuthorizeAttrCB to check a client's authorization prior to calling
 // pfnReadAttrCB or pfnWriteAttrCB, so no checks for authorization need to be
 // made within these functions.
-CONST gattServiceCBs_t battCBs = {battReadAttrCB,  // Read callback function pointer
+const gattServiceCBs_t battCBs = {battReadAttrCB,  // Read callback function pointer
 		battWriteAttrCB, // Write callback function pointer
 		NULL             // Authorization callback function pointer
 		};
@@ -204,13 +201,13 @@ CONST gattServiceCBs_t battCBs = {battReadAttrCB,  // Read callback function poi
  *
  * @return  Success or Failure
  */
-HCI_StatusCode_t Batt_AddService(void) {
+uint8_t Batt_AddService(void) {
 	uint8_t status;
 
 	// Allocate Client Characteristic Configuration table
-	battLevelClientCharCfg = (gattCharCfg_t*) ICall_malloc(sizeof(gattCharCfg_t) * linkDBNumConns);
+	battLevelClientCharCfg = (gattCharCfg_t*) malloc((sizeof(gattCharCfg_t) * linkDBNumConns));
 	if (battLevelClientCharCfg == NULL) {
-		return (bleMemAllocError);
+		return (BLE_PROFILE_MEM_ALLOC_ERROR);
 	}
 
 	// Initialize Client Characteristic Configuration attributes
@@ -250,10 +247,10 @@ extern void Batt_Register(battServiceCB_t pfnServiceCB) {
  *          data type (example: data type of uint16_t will be cast to
  *          uint16_t pointer).
  *
- * @return  HCI_StatusCode_t
+ * @return  uint8_t
  */
-HCI_StatusCode_t Batt_SetParameter(uint8_t param, uint8_t len, void *value) {
-	HCI_StatusCode_t ret = SUCCESS;
+uint8_t Batt_SetParameter(uint8_t param, uint8_t len, void *value) {
+	uint8_t ret = BLE_PROFILE_SUCCESS;
 
 	switch (param) {
 		case BATT_PARAM_CRITICAL_LEVEL:
@@ -284,10 +281,10 @@ HCI_StatusCode_t Batt_SetParameter(uint8_t param, uint8_t len, void *value) {
  *          data type (example: data type of uint16_t will be cast to
  *          uint16_t pointer).
  *
- * @return  HCI_StatusCode_t
+ * @return  uint8_t
  */
-HCI_StatusCode_t Batt_GetParameter(uint8_t param, void *value) {
-	HCI_StatusCode_t ret = SUCCESS;
+uint8_t Batt_GetParameter(uint8_t param, void *value) {
+	uint8_t ret = BLE_PROFILE_SUCCESS;
 	switch (param) {
 		case BATT_PARAM_LEVEL:
 			*((uint8*) value) = battLevel;
@@ -298,7 +295,7 @@ HCI_StatusCode_t Batt_GetParameter(uint8_t param, void *value) {
 			break;
 
 		case BATT_PARAM_SERVICE_HANDLE:
-			*((uint16*) value) = GATT_SERVICE_HANDLE(battAttrTbl);
+			*((uint16*) value) = (battAttrTbl[0].handle);
 			break;
 
 		case BATT_PARAM_BATT_LEVEL_IN_REPORT: {
@@ -332,7 +329,7 @@ HCI_StatusCode_t Batt_GetParameter(uint8_t param, void *value) {
  *
  * @return      Success
  */
-HCI_StatusCode_t Batt_MeasLevel(void) {
+uint8_t Batt_MeasLevel(void) {
 	uint16_t level = 100;	//Intentionally constant as device has no independent power source
 
 	// If level has gone down
@@ -344,7 +341,7 @@ HCI_StatusCode_t Batt_MeasLevel(void) {
 		battNotifyLevel();
 	}
 
-	return SUCCESS;
+	return BLE_PROFILE_SUCCESS;
 }
 
 /*********************************************************************
@@ -360,10 +357,10 @@ HCI_StatusCode_t Batt_MeasLevel(void) {
  * @param       maxLen - maximum length of data to be read
  * @param       method - type of read message
  *
- * @return      SUCCESS, blePending or Failure
+ * @return      BLE_PROFILE_SUCCESS, blePending or Failure
  */
-static HCI_StatusCode_t battReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8 method) {
-	HCI_StatusCode_t status = SUCCESS;
+static uint8_t battReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8 method) {
+	uint8_t status = BLE_PROFILE_SUCCESS;
 
 	// Make sure it's not a blob operation (no attributes in the profile are long)
 	if (offset > 0) {
@@ -408,16 +405,16 @@ static HCI_StatusCode_t battReadAttrCB(uint16_t connHandle, gattAttribute_t *pAt
  * @param   offset - offset of the first octet to be written
  * @param   method - type of write message
  *
- * @return  SUCCESS, blePending or Failure
+ * @return  BLE_PROFILE_SUCCESS, blePending or Failure
  */
-static HCI_StatusCode_t battWriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8 method) {
-	HCI_StatusCode_t status = SUCCESS;
+static uint8_t battWriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8 method) {
+	uint8_t status = BLE_PROFILE_BLE_PROFILE_SUCCESS;
 
 	uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
 	switch (uuid) {
 		case GATT_CLIENT_CHAR_CFG_UUID:
 			status = GATTServApp_ProcessCCCWriteReq(connHandle, pAttr, pValue, len, offset, GATT_CLIENT_CFG_NOTIFY);
-			if (status == SUCCESS) {
+			if (status == BLE_PROFILE_SUCCESS) {
 				uint16_t charCfg = BUILD_UINT16(pValue[0], pValue[1]);
 
 				if (battServiceCB) {
@@ -457,7 +454,7 @@ static void battNotify(uint16_t connHandle) {
 			noti.len = BATT_LEVEL_VALUE_LEN;
 			noti.pValue[0] = battLevel;
 
-			if (GATT_Notification(connHandle, &noti, FALSE) != SUCCESS) {
+			if (GATT_Notification(connHandle, &noti, FALSE) != BLE_PROFILE_SUCCESS) {
 				GATT_bm_free((gattMsg_t*) &noti, ATT_HANDLE_VALUE_NOTI);
 			}
 		}

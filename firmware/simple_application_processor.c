@@ -39,6 +39,8 @@
 #include "platform.h"
 #include "Profile/hidservice.h"
 #include "Profile/devinfoservice.h"
+#include "constants.h"
+#include "bt_uuid.h"
 
 /***********************************************************************
  * 						 VARIABLE DECLARATIONS
@@ -277,16 +279,13 @@ static void AP_init(void) {
 	GPIO_setCallback(Board_BUTTON0, (GPIO_CallbackFxn) AP_keyHandler);
 	GPIO_enableInt(Board_BUTTON0);
 
-	GPIO_setCallback(Board_BUTTON1, (GPIO_CallbackFxn) AP_bslKeyHandler);
-	GPIO_enableInt(Board_BUTTON1);
-
 	/* Write to the UART. */
 	Display_print0(displayOut, 0, 0, "--------- Simple Application Processor Example ---------");
 	Display_print0(displayOut, 0, 0, "Application Processor Initializing... ");
 
 	/* Register to receive notifications from Simple Profile if characteristics
 	 have been written to */
-	SimpleProfile_RegisterAppCB(&simpleCBs);
+	HidDev_Register(&simpleCBs);
 }
 
 /*******************************************************************************
@@ -428,14 +427,12 @@ static void* AP_taskFxn(void *arg0) {
 					curEvent = 0;
 					mq_receive(apQueueRec, (char*) &curEvent, sizeof(uint32_t), &prio);
 
-					if ((curEvent != AP_EVT_BSL_BUTTON) && (curEvent != AP_EVT_PUI)) {
+					if  (curEvent != AP_EVT_PUI) {
 						Display_printf(displayOut, 0, 0, "[bleThread] Warning! Unexpected Event %lu", curEvent);
 					}
-				} while ((curEvent != AP_EVT_BSL_BUTTON) && (curEvent != AP_EVT_PUI));
+				} while (curEvent != AP_EVT_PUI);
 
-				if (curEvent == AP_EVT_BSL_BUTTON) {
-					state = AP_SBL;
-				} else if (curEvent == AP_EVT_PUI) {
+				 else if (curEvent == AP_EVT_PUI) {
 					/* Read BD ADDR */
 					SAP_setParam(SAP_PARAM_HCI, SNP_HCI_OPCODE_READ_BDADDR, 0,
 					NULL);
@@ -553,22 +550,6 @@ static void* AP_taskFxn(void *arg0) {
 				GPIO_write(Board_LED0, Board_LED_OFF);
 				Display_print0(displayOut, 0, 0, "State set to idle.");
 
-				/* Key Press triggers state change from idle */
-				do {
-					curEvent = 0;
-					mq_receive(apQueueRec, (char*) &curEvent, sizeof(uint32_t), &prio);
-
-					if ((curEvent != AP_EVT_BUTTON_RIGHT) && (curEvent != AP_EVT_BSL_BUTTON)) {
-						Display_printf(displayOut, 0, 0, "[bleThread] Warning! Unexpected Event %lu", curEvent);
-					}
-				} while ((curEvent != AP_EVT_BUTTON_RIGHT) && (curEvent != AP_EVT_BSL_BUTTON));
-
-				if (curEvent == AP_EVT_BUTTON_RIGHT) {
-					state = AP_START_ADV;
-				} else if (curEvent == AP_EVT_BSL_BUTTON) {
-					state = AP_SBL;
-				}
-
 				break;
 
 			default:
@@ -594,7 +575,7 @@ static void* AP_notifyTask(void *arg0) {
 
 		/* Set parameter value of char4. If notifications or indications have
 		 been enabled, the profile will send them. */
-		SimpleProfile_SetParameter(SP_CHAR4_ID, sizeof(char4), &char4);
+		hidser_SetParameter(SP_CHAR4_ID, sizeof(char4), &char4);
 
 		/* Increment the value of characteristic 4 every 5 seconds. This way
 		 notification can be more clearly seen on client */

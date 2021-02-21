@@ -53,8 +53,10 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <ti/ble5stack/central/gatt.h>
-#include <stdint.h>
+//#include <ti/ble5stack/central/gatt.h>
+#include <ti/sap/sap.h>
+
+	#include <stdint.h>
 
 	/*********************************************************************
 	 * CONSTANTS
@@ -94,7 +96,7 @@ extern "C" {
 	 *
 	 */
 
-	extern HCI_StatusCode_t DevInfo_AddService(void);
+	extern uint8_t DevInfo_AddService(void);
 
 	/*********************************************************************
 	 * @fn      DevInfo_SetParameter
@@ -108,9 +110,9 @@ extern "C" {
 	 *          data type (example: data type of uint16 will be cast to
 	 *          uint16 pointer).
 	 *
-	 * @return  HCI_StatusCode_t
+	 * @return  uint8_t
 	 */
-	HCI_StatusCode_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value);
+	uint8_t DevInfo_SetParameter(uint8_t param, uint8_t len, void *value);
 
 	/*
 	 * DevInfo_GetParameter - Get a Device Information parameter.
@@ -121,7 +123,7 @@ extern "C" {
 	 *          data type (example: data type of uint16 will be cast to
 	 *          uint16 pointer).
 	 */
-	extern HCI_StatusCode_t DevInfo_GetParameter(uint8_t param, void *value);
+	extern uint8_t DevInfo_GetParameter(uint8_t param, void *value);
 
 #ifdef __cplusplus
 }
