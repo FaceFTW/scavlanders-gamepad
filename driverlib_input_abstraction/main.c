@@ -51,7 +51,7 @@ int main(void) {
 	while (1) {
 	    initLCD();
 	    testLCD();
-	    initbutton();
+	    init_button();
 	    while((SysTick_CTRL_COUNTFLAG_Msk & SysTick-> CTRL) == 0){
 
 	    }

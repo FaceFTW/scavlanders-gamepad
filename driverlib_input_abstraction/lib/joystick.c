@@ -83,22 +83,22 @@ void init_joy(){
 
 }
 void printvalue(void){
-    printf(x_value);
-    printf(y_value);
+    printf("%d", x_value );
+    printf("%d", y_value );
+    printf("%d", analog_x);
+    printf("%d", analog_y);
 
-    printf('%d', analog_x);
-    printf('%d', analog_y);
 }
 
 void ADC14_IRQHandler(void){
     uint64_t status = MAP_ADC14_getEnabledInterruptStatus();
     MAP_ADC14_clearInterruptFlag(status);
     if(ADC_INT0 & status){
-    x_value = ADC_getResult(ADC_MEM0);
-    y_value = ADC_getResult(ADC_MEM1);
+    x_value = ADC14_getResult(ADC_MEM0);
+    y_value = ADC14_getResult(ADC_MEM1);
 
-    analog_x = (float) ((((x_value * 3.3)/) -1.75)/16384);
-    analog_y = (float) ((((y_value * 3.3)/) -1.75)/16384);
+    analog_x = (float) (((x_value * 3.3) -1.75)/16384);
+    analog_y = (float) (((y_value * 3.3) -1.75)/16384);
     ADC14_toggleConversionTrigger();
 
     }
