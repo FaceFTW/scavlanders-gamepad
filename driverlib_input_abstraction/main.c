@@ -49,7 +49,9 @@ int main(void) {
 	 * 								MAIN LOOP							   *
 	***********************************************************************/
 	while (1) {
-
+	    initLCD();
+	    testLCD();
+	    initbutton();
 	    while((SysTick_CTRL_COUNTFLAG_Msk & SysTick-> CTRL) == 0){
 
 	    }
