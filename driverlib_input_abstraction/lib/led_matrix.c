@@ -5,6 +5,7 @@
  * Description: Prototype header for lcd.c
  * \version: Feb 11, 2021
  ***********************************************************************/
+#include <led_matrix.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
