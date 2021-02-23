@@ -23,16 +23,16 @@
 //#include "lib/led_matrix.h"
 
 
-const char uartInit[] = "UART Initialized!";
-const char uartInitA[] = "button A is pressed! ";
-const char uartInitB[] = "button B is pressed! ";
-const char uartInitX[] = "button X is pressed! ";
-const char uartInitY[] = "button Y is pressed! ";
-const char uartInitTL[] = "button TL is pressed! ";
-const char uartInitTR[] = "button TR is pressed! ";
-const char uartInitSEL[] = "button Sel is pressed! ";
-const char uartInitSTART[] = "button START is pressed! ";
-const char uartInitP[] = "button PAIR is pressed! ";
+char uartInit[] = "UART Initialized!";
+char uartInitA[] = "button A is pressed! ";
+char uartInitB[] = "button B is pressed! ";
+char uartInitX[] = "button X is pressed! ";
+char uartInitY[] = "button Y is pressed! ";
+char uartInitTL[] = "button TL is pressed! ";
+char uartInitTR[] = "button TR is pressed! ";
+char uartInitSEL[] = "button Sel is pressed! ";
+char uartInitSTART[] = "button START is pressed! ";
+char uartInitP[] = "button PAIR is pressed! ";
 #define length(x) (sizeof(x)/sizeof(x[0]))
 
 const eUSCI_UART_ConfigV1 uartCfg = {
