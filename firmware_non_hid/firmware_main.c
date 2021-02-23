@@ -50,12 +50,11 @@
 
 /* SAP/DriverLib Includes */
 #include <ti/sap/sap.h>
-#include <ti/sbl/sbl.h>
-#include <ti/sbl/sbl_image.h>
 
 /* Local Includes */
 #include "Board.h"
 #include "platform.h"
+#include "MSP_EXP432P401R.h"
 
 /* Used to pass messages between callbacks and the task */
 static mqd_t apQueueRec;
@@ -67,6 +66,12 @@ extern Display_Handle displayOut;
 
 /* Clock instances for internal periodic events. */
 static Timer_Handle timer0;
+static Timer_Handle pollTimer;
+
+static ADC_Handle joyXHandle;
+static ADC_Handle joyYHandle;
+static uint16_t joyXADCval;
+static uint16_t joyYADCval;
 
 /* Task configuration */
 static pthread_t apTask;
@@ -74,13 +79,13 @@ static pthread_t notifyTask;
 
 /* SAP Parameters for opening serial port to SNP */
 static SAP_Params sapParams;
-static uint8_t snpDeviceName[] = {'S', 'i', 'm', 'p', 'l', 'e', ' ', 'A', 'P'};
+static uint8_t snpDeviceName[] = {'S', 'c', 'a', 'v', 'l', 'a', 'n', 'd', 'e', 'r', 's', ' ', 'G', 'a', 'm', 'e', 'p', 'a', 'd'};
 
 /* GAP - SCAN RSP data (max size = 31 bytes) */
 static uint8_t scanRspData[] = {
 /* Complete Name */
-0xb,/* length of this data */
-SAP_GAP_ADTYPE_LOCAL_NAME_COMPLETE, 'M', 'S', 'P', '4', '3', '2', ' ', 'S', 'A', 'P',
+0x13,/* length of this data */
+SAP_GAP_ADTYPE_LOCAL_NAME_COMPLETE, 'S', 'c', 'a', 'v', 'l', 'a', 'n', 'd', 'e', 'r', 's', ' ', 'G', 'a', 'm', 'e', 'p', 'a', 'd',
 
 /* Connection interval range */
 0x05, /* length of this data */
@@ -117,7 +122,12 @@ static char peerstr[] = "Peer: 0xFFFFFFFFFFFF";
 #define peerstrIDX       8
 
 /* Characteristic 3 Update string */
-static uint8_t char3 = 3;
+static uint16_t char1 = 0;
+/* Characteristic 3 Update string */
+static uint16_t char2 = 0;
+
+/* Characteristic 3 Update string */
+static uint16_t char3 = 0;
 
 /* Characteristic 4 */
 static uint8_t char4 = 0;
@@ -135,6 +145,8 @@ static void AP_asyncCB(uint8_t cmd1, void *pParams);
 static void AP_processSNPEventCB(uint16_t event, snpEventParam_t *param);
 static void AP_SPWriteCB(uint8_t charID);
 static void AP_SPcccdCB(uint8_t charID, uint16_t value);
+//static void inputButtonHandler(void);
+static void pollHandler(Timer_Handle handle);
 static BLEProfileCallbacks_t simpleCBs = {AP_SPWriteCB, AP_SPcccdCB};
 
 /*******************************************************************************
@@ -196,6 +208,7 @@ void AP_createTask(void) {
  *******************************************(**********************************/
 static void AP_init(void) {
 	Timer_Params params;
+	Timer_Params pollParams;
 	struct mq_attr attr;
 
 	/* Create RTOS Queue */
@@ -210,22 +223,52 @@ static void AP_init(void) {
 	/* Setting up the timer in continuous callback mode that calls the callback
 	 * functions every 5s.*/
 	Timer_Params_init(&params);
-	params.period = AP_PERIODIC_EVT_PERIOD;
+	params.period = 10000;
 	params.periodUnits = Timer_PERIOD_US;
 	params.timerMode = Timer_CONTINUOUS_CALLBACK;
 	params.timerCallback = AP_timerHandler;
+
+	Timer_Params_init(&pollParams);
+	pollParams.period = 5000;
+	pollParams.periodUnits = Timer_PERIOD_US;
+	pollParams.timerMode = Timer_CONTINUOUS_CALLBACK;
+	pollParams.timerCallback = *(pollHandler);
+
+	joyXHandle = ADC_open(Joy_X, NULL);
+	joyYHandle = ADC_open(Joy_Y, NULL);
+	joyXADCval = 0;
+	joyYADCval = 0;
 
 	timer0 = Timer_open(Board_Timer0, &params);
 	if (timer0 == NULL) {
 		Display_print0(displayOut, 0, 0, "Failed to initialized Timer!");
 	}
+	pollTimer = Timer_open(Board_Timer1, &pollParams);
+	if (pollTimer == NULL) {
+		Display_print0(displayOut, 0, 0, "Failed to initialized Polling Timer!");
+	}
+	Timer_start(pollTimer);
 
 	/* Register Key Handler */
 	GPIO_setCallback(Button_Pairing, (GPIO_CallbackFxn) AP_keyHandler);
 	GPIO_enableInt(Button_Pairing);
 
-//    GPIO_setCallback(Board_BUTTON1, (GPIO_CallbackFxn) AP_bslKeyHandler);
-//    GPIO_enableInt(Board_BUTTON1);
+//	GPIO_setCallback(Button_A, (GPIO_CallbackFxn) inputButtonHandler);
+//	GPIO_enableInt(Button_A);
+//	GPIO_setCallback(Button_B, (GPIO_CallbackFxn) inputButtonHandler);
+//	GPIO_enableInt(Button_B);
+//	GPIO_setCallback(Button_X, (GPIO_CallbackFxn) inputButtonHandler);
+//	GPIO_enableInt(Button_X);
+//	GPIO_setCallback(Button_Y, (GPIO_CallbackFxn) inputButtonHandler);
+//	GPIO_enableInt(Button_Y);
+//	GPIO_setCallback(Button_LTrigger, (GPIO_CallbackFxn) inputButtonHandler);
+//	GPIO_enableInt(Button_LTrigger);
+//	GPIO_setCallback(Button_RTrigger, (GPIO_CallbackFxn) inputButtonHandler);
+//	GPIO_enableInt(Button_RTrigger);
+//	GPIO_setCallback(Button_Start, (GPIO_CallbackFxn) inputButtonHandler);
+//	GPIO_enableInt(Button_Start);
+//	GPIO_setCallback(Button_Select, (GPIO_CallbackFxn) inputButtonHandler);
+//	GPIO_enableInt(Button_Select);
 
 	/* Write to the UART. */
 	Display_print0(displayOut, 0, 0, "--------- Simple Application Processor Example ---------");
@@ -461,8 +504,12 @@ static void* AP_notifyTask(void *arg0) {
 	while (1) {
 		sem_wait(&notifySem);
 
+
 		/* Set parameter value of char4. If notifications or indications have
 		 been enabled, the profile will send them. */
+		SimpleProfile_SetParameter(SP_CHAR1_ID, sizeof(char1), &char1);
+		SimpleProfile_SetParameter(SP_CHAR2_ID, sizeof(joyXADCval), &joyXADCval);
+		SimpleProfile_SetParameter(SP_CHAR3_ID, sizeof(joyYADCval), &joyYADCval);
 		SimpleProfile_SetParameter(SP_CHAR4_ID, sizeof(char4), &char4);
 
 		/* Increment the value of characteristic 4 every 5 seconds. This way
@@ -481,13 +528,13 @@ static void* AP_notifyTask(void *arg0) {
  * @return  None.
  ******************************************************************************/
 static void AP_initServices(void) {
-	uint8_t charValue1 = 1;
-	uint8_t charValue2 = 2;
-	uint8_t charValue3 = 3;
+//	uint8_t charValue1 = 1;
+//	uint8_t charValue2 = 2;
+//	uint8_t charValue3 = 3;
 
-	SimpleProfile_SetParameter(SP_CHAR1_ID, sizeof(uint8_t), &charValue1);
-	SimpleProfile_SetParameter(SP_CHAR2_ID, sizeof(uint8_t), &charValue2);
-	SimpleProfile_SetParameter(SP_CHAR3_ID, sizeof(uint8_t), &charValue3);
+	SimpleProfile_SetParameter(SP_CHAR1_ID, sizeof(uint8_t), &char1);
+	SimpleProfile_SetParameter(SP_CHAR2_ID, sizeof(uint8_t), &char2);
+	SimpleProfile_SetParameter(SP_CHAR3_ID, sizeof(uint8_t), &char3);
 	SimpleProfile_SetParameter(SP_CHAR4_ID, sizeof(uint8_t), &char4);
 
 	/* Add the SimpleProfile Service to the SNP. */
@@ -626,39 +673,82 @@ static void AP_timerHandler(Timer_Handle handle) {
 }
 
 static void AP_SPWriteCB(uint8_t charID) {
-	switch (PROFILE_ID_CHAR(charID)) {
-		case SP_CHAR1:
-			switch (PROFILE_ID_CHARTYPE(charID)) {
-				case PROFILE_VALUE:
-					/* Toggle LED every time a new value is received */
-					GPIO_toggle(Board_LED2);
-					GPIO_toggle(Board_LED3);
-					break;
-				default:
-					/* Should not receive other types */
-					break;
-			}
-			break;
-		case SP_CHAR3:
-			switch (PROFILE_ID_CHARTYPE(charID)) {
-				case PROFILE_VALUE:
-					/* Update LCD with new value of Characteristic 3 */
-					SimpleProfile_GetParameter(charID, &char3);
-					Display_print1(displayOut, 0, 0, "Characteristic 3: %d", char3);
-					break;
-				default:
-					/* Should not receive other types */
-					break;
-			}
-			break;
-		default:
-			/* Other Characteristics not writable */
-			break;
-	}
+
 }
 
 static void AP_SPcccdCB(uint8_t charID, uint16_t value) {
 	switch (PROFILE_ID_CHAR(charID)) {
+		case SP_CHAR1:
+			switch (PROFILE_ID_CHARTYPE(charID)) {
+				case PROFILE_CCCD:
+					/* If indication or notification flags are set start periodic
+					 clock that will write to characteristic 4 */
+					if (value & (SNP_GATT_CLIENT_CFG_NOTIFY | SNP_GATT_CLIENT_CFG_INDICATE)) {
+						Timer_start(timer0);
+						Display_print0(displayOut, 0, 0, "Update enabled!");
+
+						/* Update LCD with current value of Characteristic 4 */
+						Display_print1(displayOut, 0, 0, "Characteristic 1: %d", char1);
+					} else {
+						/* Flags are not set so make sure clock has stopped and clear
+						 appropriate fields of LCD */
+						Timer_stop(timer0);
+					}
+					break;
+
+				default:
+					/* Should not receive other types */
+					break;
+			}
+			break;
+		case SP_CHAR2:
+			switch (PROFILE_ID_CHARTYPE(charID)) {
+				case PROFILE_CCCD:
+					/* If indication or notification flags are set start periodic
+					 clock that will write to characteristic 4 */
+					if (value & (SNP_GATT_CLIENT_CFG_NOTIFY | SNP_GATT_CLIENT_CFG_INDICATE)) {
+						Timer_start(timer0);
+						Display_print0(displayOut, 0, 0, "Update enabled!");
+
+						/* Update LCD with current value of Characteristic 4 */
+						Display_print1(displayOut, 0, 0, "Characteristic 2: %d", char2);
+					} else {
+						/* Flags are not set so make sure clock has stopped and clear
+						 appropriate fields of LCD */
+						Timer_stop(timer0);
+					}
+					break;
+
+				default:
+					/* Should not receive other types */
+					break;
+			}
+			break;
+
+		case SP_CHAR3:
+			switch (PROFILE_ID_CHARTYPE(charID)) {
+				case PROFILE_CCCD:
+					/* If indication or notification flags are set start periodic
+					 clock that will write to characteristic 4 */
+					if (value & (SNP_GATT_CLIENT_CFG_NOTIFY | SNP_GATT_CLIENT_CFG_INDICATE)) {
+						Timer_start(timer0);
+						Display_print0(displayOut, 0, 0, "Update enabled!");
+
+						/* Update LCD with current value of Characteristic 4 */
+						Display_print1(displayOut, 0, 0, "Characteristic 3: %d", char3);
+					} else {
+						/* Flags are not set so make sure clock has stopped and clear
+						 appropriate fields of LCD */
+						Timer_stop(timer0);
+					}
+					break;
+
+				default:
+					/* Should not receive other types */
+					break;
+			}
+			break;
+
 		case SP_CHAR4:
 			switch (PROFILE_ID_CHARTYPE(charID)) {
 				case PROFILE_CCCD:
@@ -686,4 +776,18 @@ static void AP_SPcccdCB(uint8_t charID, uint16_t value) {
 		default:
 			break;
 	}
+}
+
+
+//Polling function callback on timer1 interrupt
+static void pollHandler(Timer_Handle handle){
+	//Iterate through GPIO Port 4
+	uint8_t buffer = 0;
+	uint8_t pin = 0;
+	for(pin = Button_A; pin < Button_Select; pin++){
+		buffer = buffer + (GPIO_read(pin) << (pin-5));
+	}
+	char1 = buffer;
+	ADC_convert(joyXHandle, &char2);
+	ADC_convert(joyYHandle, &char3);
 }

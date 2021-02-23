@@ -86,7 +86,7 @@ typedef enum
 #define AP_ERROR                0x00002000     // Error
 
 /* How often to perform periodic event (in usec) */
-#define AP_PERIODIC_EVT_PERIOD               5000000
+#define AP_PERIODIC_EVT_PERIOD               5000
 #define AP_DEFAULT_CONN_HANDLE               0xFFFF
 
 /* Company Identifier: Texas Instruments Inc. (13) */

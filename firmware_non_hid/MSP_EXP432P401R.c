@@ -81,15 +81,13 @@ const ADCMSP432_HWAttrsV1 adcMSP432HWAttrs[MSP_EXP432P401R_ADCCOUNT] = {
 		}, {
 				/* Joy_X */
 				.adcPin = ADCMSP432_P8_7_A18,
-				.refVoltage = ADCMSP432_REF_VOLTAGE_EXT,
+				.refVoltage = ADCMSP432_REF_VOLTAGE_INT_2_5V,
 				.resolution = ADC_8BIT,
-				.refExtValue = 3300000
 		}, {
 				/* Joy_Y */
 				.adcPin = ADCMSP432_P8_6_A19,
-				.refVoltage = ADCMSP432_REF_VOLTAGE_EXT,
+				.refVoltage = ADCMSP432_REF_VOLTAGE_INT_2_5V,
 				.resolution = ADC_8BIT,
-				.refExtValue = 3300000
 		}
 };
 
@@ -325,16 +323,16 @@ GPIO_PinConfig gpioPinConfigs[] = {
 				GPIOMSP432_P4_2 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 				/* Button_Y */
 				GPIOMSP432_P4_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
+				/* Trigger_Left */
+				GPIOMSP432_P4_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
+				/* Trigger_Right */
+				GPIOMSP432_P4_5 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 				/* Button_Start */
 				GPIOMSP432_P4_6 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 				/* Button_Select */
 				GPIOMSP432_P4_7 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_RISING,
 				/* Button_Pairing */
 				GPIOMSP432_P6_2 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
-				/* Trigger_Left */
-				GPIOMSP432_P4_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
-				/* Trigger_Right */
-				GPIOMSP432_P4_5 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 
 				/* Output pins */
 				/* MSP_EXP432P401R_LED1 */

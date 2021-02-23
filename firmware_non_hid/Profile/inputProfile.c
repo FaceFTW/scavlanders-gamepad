@@ -84,13 +84,13 @@ static uint8_t simpleProfileChar1 = 0;
 static uint8_t simpleProfileChar1UserDesp[17] = "Button Input";
 
 /* Characteristic 2 Value */
-static uint8_t simpleProfileChar2 = 0;
+static uint16_t simpleProfileChar2 = 0;
 
 /* Simple Profile Characteristic 2 User Description */
 static uint8_t simpleProfileChar2UserDesp[17] = "Joystick X";
 
 /* Characteristic 3 Value */
-static uint8_t simpleProfileChar3 = 0;
+static uint16_t simpleProfileChar3 = 0;
 
 /* Simple Profile Characteristic 3 User Description */
 static uint8_t simpleProfileChar3UserDesp[17] = "Joystick Y";
@@ -106,12 +106,18 @@ static uint8_t simpleProfileChar4UserDesp[17] = "Keep Alive";
  ******************************************************************************/
 SAP_UserDescAttr_t char1UserDesc = {
 SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar1UserDesp), sizeof(simpleProfileChar1UserDesp), simpleProfileChar1UserDesp};
+SAP_UserCCCDAttr_t char1CCCD = {
+SNP_GATT_PERMIT_READ | SNP_GATT_PERMIT_WRITE};
 
 SAP_UserDescAttr_t char2UserDesc = {
 SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar2UserDesp), sizeof(simpleProfileChar2UserDesp), simpleProfileChar2UserDesp};
+SAP_UserCCCDAttr_t char2CCCD = {
+SNP_GATT_PERMIT_READ | SNP_GATT_PERMIT_WRITE};
 
 SAP_UserDescAttr_t char3UserDesc = {
 SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar3UserDesp), sizeof(simpleProfileChar3UserDesp), simpleProfileChar3UserDesp};
+SAP_UserCCCDAttr_t char3CCCD = {
+SNP_GATT_PERMIT_READ | SNP_GATT_PERMIT_WRITE};
 
 SAP_UserDescAttr_t char4UserDesc = {
 SNP_GATT_PERMIT_READ, sizeof(simpleProfileChar4UserDesp), sizeof(simpleProfileChar4UserDesp), simpleProfileChar4UserDesp};
@@ -125,28 +131,28 @@ static SAP_Char_t simpleProfileAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] = {
 /* Characteristic 1 Value Declaration */
 {{SNP_16BIT_UUID_SIZE, simpleProfilechar1UUID}, /* UUID */
 SNP_GATT_PROP_NOTIFICATION, /* Properties */
-0, /* Permissions */
-&char1UserDesc /* User Description */
-},
+SNP_GATT_PERMIT_READ, /* Permissions */
+&char1UserDesc, /* User Description */
+&char1CCCD},
 
 /* Characteristic 2 Value Declaration */
 {{SNP_16BIT_UUID_SIZE, simpleProfilechar2UUID}, /* UUID */
 SNP_GATT_PROP_NOTIFICATION, /* Properties */
-0, /* Permissions */
-&char2UserDesc /* User Description */
-},
+SNP_GATT_PERMIT_READ, /* Permissions */
+&char2UserDesc, /* User Description */
+&char2CCCD},
 
 /* Characteristic 3 Value Declaration */
 {{SNP_16BIT_UUID_SIZE, simpleProfilechar3UUID}, /* UUID */
-SNP_GATT_PROP_WRITE, /* Properties */
-SNP_GATT_PERMIT_WRITE, /* Permissions */
-&char3UserDesc /* User Description */
-},
+SNP_GATT_PROP_NOTIFICATION, /* Properties */
+SNP_GATT_PERMIT_READ, /* Permissions */
+&char3UserDesc, /* User Description */
+&char3CCCD},
 
 /* Characteristic 4 Value Declaration */
 {{SNP_16BIT_UUID_SIZE, simpleProfilechar4UUID}, /* UUID */
 SNP_GATT_PROP_NOTIFICATION, /* Properties */
-0, /* Permissions */
+SNP_GATT_PERMIT_READ, /* Permissions */
 &char4UserDesc, /* User Description */
 &char4CCCD /* CCCD */
 }, };
@@ -224,15 +230,48 @@ uint32_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value) {
 	switch (PROFILE_ID_CHAR(param)) {
 		case SP_CHAR1:
 			if (len == sizeof(uint8_t)) {
+				snpNotifIndReq_t localReq;
 				simpleProfileChar1 = *((uint8*) value);
+
+				/* Initialize Request */
+				localReq.connHandle = connHandle;
+				localReq.attrHandle = ProfileUtil_getHdlFromCharID(PROFILE_ID_CREATE(SP_CHAR1, PROFILE_VALUE), simpleServiceCharHandles, SERVAPP_NUM_ATTR_SUPPORTED);
+				localReq.pData = (uint8_t*) &simpleProfileChar1;
+				localReq.authenticate = 0;
+
+				/* Check for whether a notification or indication should be sent.
+				 Both flags should never be allowed to be set by NWP */
+				if (cccdFlag & SNP_GATT_CLIENT_CFG_NOTIFY) {
+					localReq.type = SNP_SEND_NOTIFICATION;
+					SNP_RPC_sendNotifInd(&localReq, sizeof(simpleProfileChar1));
+				} else if (cccdFlag & SNP_GATT_CLIENT_CFG_INDICATE) {
+					localReq.type = SNP_SEND_INDICATION;
+					SNP_RPC_sendNotifInd(&localReq, sizeof(simpleProfileChar1));
+				}
 			} else {
 				ret = BLE_PROFILE_INVALID_RANGE;
 			}
 			break;
-
 		case SP_CHAR2:
 			if (len == sizeof(uint8_t)) {
+				snpNotifIndReq_t localReq;
 				simpleProfileChar2 = *((uint8*) value);
+
+				/* Initialize Request */
+				localReq.connHandle = connHandle;
+				localReq.attrHandle = ProfileUtil_getHdlFromCharID(PROFILE_ID_CREATE(SP_CHAR2, PROFILE_VALUE), simpleServiceCharHandles, SERVAPP_NUM_ATTR_SUPPORTED);
+				localReq.pData = (uint8_t*) &simpleProfileChar2;
+				localReq.authenticate = 0;
+
+				/* Check for whether a notification or indication should be sent.
+				 Both flags should never be allowed to be set by NWP */
+				if (cccdFlag & SNP_GATT_CLIENT_CFG_NOTIFY) {
+					localReq.type = SNP_SEND_NOTIFICATION;
+					SNP_RPC_sendNotifInd(&localReq, sizeof(simpleProfileChar2));
+				} else if (cccdFlag & SNP_GATT_CLIENT_CFG_INDICATE) {
+					localReq.type = SNP_SEND_INDICATION;
+					SNP_RPC_sendNotifInd(&localReq, sizeof(simpleProfileChar2));
+				}
 			} else {
 				ret = BLE_PROFILE_INVALID_RANGE;
 			}
@@ -240,7 +279,24 @@ uint32_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value) {
 
 		case SP_CHAR3:
 			if (len == sizeof(uint8_t)) {
+				snpNotifIndReq_t localReq;
 				simpleProfileChar3 = *((uint8*) value);
+
+				/* Initialize Request */
+				localReq.connHandle = connHandle;
+				localReq.attrHandle = ProfileUtil_getHdlFromCharID(PROFILE_ID_CREATE(SP_CHAR3, PROFILE_VALUE), simpleServiceCharHandles, SERVAPP_NUM_ATTR_SUPPORTED);
+				localReq.pData = (uint8_t*) &simpleProfileChar3;
+				localReq.authenticate = 0;
+
+				/* Check for whether a notification or indication should be sent.
+				 Both flags should never be allowed to be set by NWP */
+				if (cccdFlag & SNP_GATT_CLIENT_CFG_NOTIFY) {
+					localReq.type = SNP_SEND_NOTIFICATION;
+					SNP_RPC_sendNotifInd(&localReq, sizeof(simpleProfileChar3));
+				} else if (cccdFlag & SNP_GATT_CLIENT_CFG_INDICATE) {
+					localReq.type = SNP_SEND_INDICATION;
+					SNP_RPC_sendNotifInd(&localReq, sizeof(simpleProfileChar3));
+				}
 			} else {
 				ret = BLE_PROFILE_INVALID_RANGE;
 			}
@@ -370,6 +426,32 @@ uint8_t simpleProfile_ReadAttrCB(void *context, uint16_t connectionHandle, uint1
 					break;
 			}
 			break;
+		case SP_CHAR3:
+			switch (PROFILE_ID_CHARTYPE(charID)) {
+				case PROFILE_VALUE:
+					*pLen = sizeof(simpleProfileChar3);
+					memcpy(pData, &simpleProfileChar3, sizeof(simpleProfileChar3));
+					isValid = 1;
+					break;
+
+				default:
+					/* Should not receive SP_USERDESC || SP_FORMAT || SP_CCCD */
+					break;
+			}
+			break;
+		case SP_CHAR4:
+			switch (PROFILE_ID_CHARTYPE(charID)) {
+				case PROFILE_VALUE:
+					*pLen = sizeof(simpleProfileChar4);
+					memcpy(pData, &simpleProfileChar4, sizeof(simpleProfileChar4));
+					isValid = 1;
+					break;
+
+				default:
+					/* Should not receive SP_USERDESC || SP_FORMAT || SP_CCCD */
+					break;
+			}
+			break;
 		default:
 			/* Should not receive SP_CHAR3 || SP_CHAR4 reads */
 			break;
@@ -410,36 +492,8 @@ uint8_t simpleProfile_WriteAttrCB(void *context, uint16_t connectionHandle, uint
 	SERVAPP_NUM_ATTR_SUPPORTED);
 
 	switch (PROFILE_ID_CHAR(charID)) {
-		case SP_CHAR1:
-			switch (PROFILE_ID_CHARTYPE(charID)) {
-				case PROFILE_VALUE:
-					if (len == sizeof(simpleProfileChar1)) {
-						simpleProfileChar1 = pData[0];
-						status = SNP_SUCCESS;
-						notifyApp = SP_CHAR1_ID;
-					}
-					break;
-				default:
-					/* Should not receive SP_USERDESC || SP_FORMAT || SP_CCCD */
-					break;
-			}
-			break;
-		case SP_CHAR3:
-			switch (PROFILE_ID_CHARTYPE(charID)) {
-				case PROFILE_VALUE:
-					if (len == sizeof(simpleProfileChar3)) {
-						simpleProfileChar3 = pData[0];
-						status = SNP_SUCCESS;
-						notifyApp = SP_CHAR3_ID;
-					}
-					break;
-				default:
-					/* Should not receive SP_USERDESC || SP_FORMAT || SP_CCCD */
-					break;
-			}
-			break;
 		default:
-			/* Should not receive SP_CHAR2 || SP_CHAR4 writes */
+			/* Should not receive any writes */
 			break;
 	}
 
@@ -478,6 +532,48 @@ uint8_t simpleProfile_CCCDIndCB(void *context, uint16_t connectionHandle, uint16
 	SERVAPP_NUM_ATTR_SUPPORTED);
 
 	switch (PROFILE_ID_CHAR(charID)) {
+		case SP_CHAR1:
+			switch (PROFILE_ID_CHARTYPE(charID)) {
+				case PROFILE_CCCD:
+					/* Set Global cccd Flag which will be used to to gate Indications
+					 or notifications when SetParameter() is called */
+					cccdFlag = value;
+					notifyApp = charID;
+					status = SNP_SUCCESS;
+					break;
+				default:
+					/* Should not receive SP_VALUE || SP_USERDESC || SP_FORMAT */
+					break;
+			}
+			break;
+		case SP_CHAR2:
+			switch (PROFILE_ID_CHARTYPE(charID)) {
+				case PROFILE_CCCD:
+					/* Set Global cccd Flag which will be used to to gate Indications
+					 or notifications when SetParameter() is called */
+					cccdFlag = value;
+					notifyApp = charID;
+					status = SNP_SUCCESS;
+					break;
+				default:
+					/* Should not receive SP_VALUE || SP_USERDESC || SP_FORMAT */
+					break;
+			}
+			break;
+		case SP_CHAR3:
+			switch (PROFILE_ID_CHARTYPE(charID)) {
+				case PROFILE_CCCD:
+					/* Set Global cccd Flag which will be used to to gate Indications
+					 or notifications when SetParameter() is called */
+					cccdFlag = value;
+					notifyApp = charID;
+					status = SNP_SUCCESS;
+					break;
+				default:
+					/* Should not receive SP_VALUE || SP_USERDESC || SP_FORMAT */
+					break;
+			}
+			break;
 		case SP_CHAR4:
 			switch (PROFILE_ID_CHARTYPE(charID)) {
 				case PROFILE_CCCD:
