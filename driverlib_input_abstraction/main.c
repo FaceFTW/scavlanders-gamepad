@@ -70,7 +70,6 @@ void transmitString(char *data, uint8_t len) {
     UART_transmitData(EUSCI_A0_BASE, (uint8_t) '\n');   //Line Feed Escacpe
     UART_transmitData(EUSCI_A0_BASE, (uint8_t) '\r');   //Carriage Return Escape
 }
-
 void init_UART(void){
         GPIO_setAsPeripheralModuleFunctionInputPin(UART_PORT, UART_TX | UART_RX, GPIO_PRIMARY_MODULE_FUNCTION);
         GPIO_setAsPeripheralModuleFunctionInputPin(botton_port1,  botton_A |  botton_B | botton_X |  botton_Y  |botton_trigger_left |botton_trigger_right| botton_Start |botton_Sel , GPIO_PRIMARY_MODULE_FUNCTION);
@@ -82,6 +81,7 @@ void init_UART(void){
         transmitString(uartInit, length(uartInit));
 
 }
+
 
 
 
