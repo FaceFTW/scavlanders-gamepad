@@ -73,6 +73,25 @@ extern "C" {
 // HID feature flags
 #define HID_SERVICE_FLAGS                HID_FLAGS_REMOTE_WAKE
 
+	// HID read/write operation
+#define HID_DEV_OPER_WRITE 0  // Write operation
+#define HID_DEV_OPER_READ 1   // Read operation
+#define HID_DEV_OPER_ENABLE 2 // Notification enabled for report ID
+#define HID_DEV_OPER_DISABLE 3// Notifications disabled for report ID
+
+	// HID callback events
+#define HID_DEV_SUSPEND_EVT 0             // HID suspend
+#define HID_DEV_EXIT_SUSPEND_EVT 1        // HID exit suspend
+#define HID_DEV_SET_BOOT_EVT 2            // HID set boot mode
+#define HID_DEV_SET_REPORT_EVT 3          // HID set report mode
+#define HID_DEV_GAPROLE_STATE_CHANGE_EVT 4// HID GAP Role state change
+#define HID_DEV_GAPBOND_STATE_CHANGE_EVT 5// HID GAP Bond state change
+
+	/* HID Report type */
+#define HID_REPORT_TYPE_INPUT 1
+#define HID_REPORT_TYPE_OUTPUT 2
+#define HID_REPORT_TYPE_FEATURE 3
+
 //Length Vals
 #define HID_DEV_DATA_LEN                      9
 
@@ -99,6 +118,12 @@ extern "C" {
 	 parameter update request is enabled */
 #define DEFAULT_DESIRED_MAX_CONN_INTERVAL   800
 
+	// HID report map length
+	extern uint8_t hidReportMapLen;
+
+	// HID protocol mode
+	extern uint8_t hidProtocolMode;
+
 	/*********************************************************************
 	 * @fn      HidService_AddService
 	 *
@@ -109,7 +134,7 @@ extern "C" {
 	 *
 	 * @return  Success or Failure
 	 */
-	extern HCI_StatusCodes_t HidService_AddService(void);
+	extern uint8_t HidService_AddService(void);
 
 #ifdef __cplusplus
 }

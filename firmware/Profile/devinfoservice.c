@@ -53,36 +53,11 @@
 #include "constants.h"
 #include "profile_util.h"
 #include "devinfoservice.h"
-/*********************************************************************
- * MACROS
- */
 
-/*********************************************************************
- * constANTS
- */
-
-/*********************************************************************
- * TYPEDEFS
- */
-
-/*********************************************************************
- * GLOBAL VARIABLES
- */
-
-
-/*********************************************************************
- * EXTERNAL VARIABLES
- */
-
-/*********************************************************************
- * EXTERNAL FUNCTIONS
- */
 
 extern void* memcpy(void *dest, const void *src, size_t len);
 
-/*********************************************************************
- * LOCAL VARIABLES
- */
+
 
 /*********************************************************************
  * Profile Attributes - variables
@@ -92,35 +67,33 @@ extern void* memcpy(void *dest, const void *src, size_t len);
 static const gattAttrType_t devInfoService = {ATT_BT_UUID_SIZE, devInfoServUUID};
 
 // System ID characteristic
-static uint8_t devInfoSystemIdProps = GATT_PROP_READ;
+
 static uint8_t devInfoSystemId[DEVINFO_SYSTEM_ID_LEN] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // Model Number String characteristic
-static uint8_t devInfoModelNumberProps = GATT_PROP_READ;
+
 static uint8_t devInfoModelNumber[DEVINFO_STR_ATTR_LEN + 1] = "Model Number";
 
 // Serial Number String characteristic
-static uint8_t devInfoSerialNumberProps = GATT_PROP_READ;
+
 static uint8_t devInfoSerialNumber[DEVINFO_STR_ATTR_LEN + 1] = "Serial Number";
 
-// Firmware Revision String characteristic
-static uint8_t devInfoFirmwareRevProps = GATT_PROP_READ;
+
 static uint8_t devInfoFirmwareRev[DEVINFO_STR_ATTR_LEN + 1] = "Firmware Revision";
 
 // Hardware Revision String characteristic
-static uint8_t devInfoHardwareRevProps = GATT_PROP_READ;
+
 static uint8_t devInfoHardwareRev[DEVINFO_STR_ATTR_LEN + 1] = "Hardware Revision";
 
-// Software Revision String characteristic
-static uint8_t devInfoSoftwareRevProps = GATT_PROP_READ;
+
 static uint8_t devInfoSoftwareRev[DEVINFO_STR_ATTR_LEN + 1] = "Software Revision";
 
 // Manufacturer Name String characteristic
-static uint8_t devInfoMfrNameProps = GATT_PROP_READ;
+
 static uint8_t devInfoMfrName[DEVINFO_STR_ATTR_LEN + 1] = "Manufacturer Name";
 
 // IEEE 11073-20601 Regulatory Certification Data List characteristic
-static uint8_t devInfo11073CertProps = GATT_PROP_READ;
+
 static uint8_t defaultDevInfo11073Cert[] = {
 DEVINFO_11073_BODY_EXP,     // authoritative body type
 		0x00,                       // authoritative body structure type
@@ -151,73 +124,46 @@ static gattAttribute_t devInfoAttrTbl[] = {
 		(uint8_t*) &devInfoService /* pValue */
 		},
 
-		// System ID Declaration
-		{{ATT_BT_UUID_SIZE, characterUUID},
-		GATT_PERMIT_READ, 0, &devInfoSystemIdProps},
 
-		// System ID Value
 		{{ATT_BT_UUID_SIZE, devInfoSystemIdUUID},
 		GATT_PERMIT_READ, 0, (uint8_t*) devInfoSystemId},
 
-		// Model Number String Declaration
-		{{ATT_BT_UUID_SIZE, characterUUID},
-		GATT_PERMIT_READ, 0, &devInfoModelNumberProps},
+
 
 		// Model Number Value
 		{{ATT_BT_UUID_SIZE, devInfoModelNumberUUID},
 		GATT_PERMIT_READ, 0, (uint8_t*) devInfoModelNumber},
 
-		// Serial Number String Declaration
-		{{ATT_BT_UUID_SIZE, characterUUID},
-		GATT_PERMIT_READ, 0, &devInfoSerialNumberProps},
-
 		// Serial Number Value
 		{{ATT_BT_UUID_SIZE, devInfoSerialNumberUUID},
 		GATT_PERMIT_READ, 0, (uint8_t*) devInfoSerialNumber},
 
-		// Firmware Revision String Declaration
-		{{ATT_BT_UUID_SIZE, characterUUID},
-		GATT_PERMIT_READ, 0, &devInfoFirmwareRevProps},
 
 		// Firmware Revision Value
 		{{ATT_BT_UUID_SIZE, devInfoFirmwareRevUUID},
 		GATT_PERMIT_READ, 0, (uint8_t*) devInfoFirmwareRev},
 
-		// Hardware Revision String Declaration
-		{{ATT_BT_UUID_SIZE, characterUUID},
-		GATT_PERMIT_READ, 0, &devInfoHardwareRevProps},
-
 		// Hardware Revision Value
 		{{ATT_BT_UUID_SIZE, devInfoHardwareRevUUID},
 		GATT_PERMIT_READ, 0, (uint8_t*) devInfoHardwareRev},
 
-		// Software Revision String Declaration
-		{{ATT_BT_UUID_SIZE, characterUUID},
-		GATT_PERMIT_READ, 0, &devInfoSoftwareRevProps},
 
 		// Software Revision Value
 		{{ATT_BT_UUID_SIZE, devInfoSoftwareRevUUID},
 		GATT_PERMIT_READ, 0, (uint8_t*) devInfoSoftwareRev},
 
-		// Manufacturer Name String Declaration
-		{{ATT_BT_UUID_SIZE, characterUUID},
-		GATT_PERMIT_READ, 0, &devInfoMfrNameProps},
+
 
 		// Manufacturer Name Value
 		{{ATT_BT_UUID_SIZE, devInfoMfrNameUUID},
 		GATT_PERMIT_READ, 0, (uint8_t*) devInfoMfrName},
 
-		// IEEE 11073-20601 Regulatory Certification Data List Declaration
-		{{ATT_BT_UUID_SIZE, characterUUID},
-		GATT_PERMIT_READ, 0, &devInfo11073CertProps},
+
 
 		// IEEE 11073-20601 Regulatory Certification Data List Value
 		{{ATT_BT_UUID_SIZE, devInfo11073CertUUID},
 		GATT_PERMIT_READ, 0, defaultDevInfo11073Cert},
 
-		// PnP ID Declaration
-		{{ATT_BT_UUID_SIZE, characterUUID},
-		GATT_PERMIT_READ, 0, &devInfoPnpIdProps},
 
 		// PnP ID Value
 		{{ATT_BT_UUID_SIZE, devInfoPnpIdUUID},
@@ -262,8 +208,7 @@ const gattServiceCBs_t devInfoCBs = {devInfo_ReadAttrCB, // Read callback functi
  */
 uint8_t DevInfo_AddService(void) {
 	// Register GATT attribute list and CBs with GATT Server App
-	return GATTServApp_RegisterService(devInfoAttrTbl, GATT_NUM_ATTRS(devInfoAttrTbl),
-	GATT_MAX_ENCRYPT_KEY_SIZE, &devInfoCBs);
+
 }
 
 /*********************************************************************

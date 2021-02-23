@@ -104,13 +104,11 @@ const uint8_t battLevelUUID[ATT_BT_UUID_SIZE] = {LO_UINT16(BATT_LEVEL_UUID), HI_
 // Application callback.
 static battServiceCB_t battServiceCB;
 
-
 // Critical battery level setting.
 static uint8_t battCriticalLevel;
 
 // Maximum battery level.
 static uint16_t battMaxLevel = BATT_MAX_VOLTAGE;
-
 
 /*********************************************************************
  * Profile Attributes - variables
@@ -184,7 +182,7 @@ static void battNotifyLevel(void);
 // pfnAuthorizeAttrCB to check a client's authorization prior to calling
 // pfnReadAttrCB or pfnWriteAttrCB, so no checks for authorization need to be
 // made within these functions.
-const gattServiceCBs_t battCBs = {battReadAttrCB,  // Read callback function pointer
+const SAP battCBs = {battReadAttrCB,  // Read callback function pointer
 		battWriteAttrCB, // Write callback function pointer
 		NULL             // Authorization callback function pointer
 		};
@@ -263,7 +261,7 @@ uint8_t Batt_SetParameter(uint8_t param, uint8_t len, void *value) {
 			break;
 
 		default:
-			ret = INVALIDPARAMETER;
+			ret = BLE_PROFILE_INVALIDPARAMETER;
 			break;
 	}
 
@@ -310,7 +308,7 @@ uint8_t Batt_GetParameter(uint8_t param, void *value) {
 			break;
 
 		default:
-			ret = INVALIDPARAMETER;
+			ret = BLE_PROFILE_INVALIDPARAMETER;
 			break;
 	}
 
@@ -408,7 +406,7 @@ static uint8_t battReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8
  * @return  BLE_PROFILE_SUCCESS, blePending or Failure
  */
 static uint8_t battWriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint8_t *pValue, uint16_t len, uint16_t offset, uint8 method) {
-	uint8_t status = BLE_PROFILE_BLE_PROFILE_SUCCESS;
+	uint8_t status = BLE_PROFILE_SUCCESS;
 
 	uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
 	switch (uuid) {
@@ -420,7 +418,7 @@ static uint8_t battWriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr, uint
 				if (battServiceCB) {
 					(*battServiceCB)((charCfg == GATT_CFG_NO_OPERATION) ?
 					BATT_LEVEL_NOTI_DISABLED :
-																			BATT_LEVEL_NOTI_ENABLED);
+															BATT_LEVEL_NOTI_ENABLED);
 				}
 			}
 			break;
@@ -470,31 +468,7 @@ static void battNotify(uint16_t connHandle) {
  * @return  Battery level.
  */
 static uint8_t battMeasure(void) {
-	uint32_t percent;
-
-	// Call measurement setup callback
-	if (battServiceSetupCB != NULL) {
-		battServiceSetupCB();
-	}
-
-	// Read the battery voltage (V), only the first 12 bits
-	percent = AONBatMonBatteryVoltageGet();
-
-	// Convert to from V to mV to avoid fractions.
-	// Fractional part is in the lower 8 bits thus converting is done as follows:
-	// (1/256)/(1/1000) = 1000/256 = 125/32
-	// This is done most effectively by multiplying by 125 and then shifting
-	// 5 bits to the right.
-	percent = (percent * 125) >> 5;
-	// Convert to percentage of maximum voltage.
-	percent = ((percent * 100) / battMaxLevel);
-
-	// Call measurement teardown callback
-	if (battServiceTeardownCB != NULL) {
-		battServiceTeardownCB();
-	}
-
-	return percent;
+	return 100;		//Intentional
 }
 
 /*********************************************************************

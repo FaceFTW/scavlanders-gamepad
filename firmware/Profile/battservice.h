@@ -105,7 +105,7 @@ extern "C" {
 	 *
 	 * @return  Success or Failure
 	 */
-	extern HCI_StatusCode_t Batt_AddService(void);
+	extern uint8_t Batt_AddService(void);
 
 	/*********************************************************************
 	 * @fn      Batt_Register
@@ -130,9 +130,9 @@ extern "C" {
 	 *          data type (example: data type of uint16 will be cast to
 	 *          uint16 pointer).
 	 *
-	 * @return  HCI_StatusCode_t
+	 * @return  uint8_t
 	 */
-	extern HCI_StatusCode_t Batt_SetParameter(uint8_t param, uint8_t len, void *value);
+	extern uint8_t Batt_SetParameter(uint8_t param, uint8_t len, void *value);
 
 	/*********************************************************************
 	 * @fn      Batt_GetParameter
@@ -145,9 +145,9 @@ extern "C" {
 	 *          data type (example: data type of uint16 will be cast to
 	 *          uint16 pointer).
 	 *
-	 * @return  HCI_StatusCode_t
+	 * @return  uint8_t
 	 */
-	extern HCI_StatusCode_t Batt_GetParameter(uint8_t param, void *value);
+	extern uint8_t Batt_GetParameter(uint8_t param, void *value);
 
 	/*********************************************************************
 	 * @fn          Batt_MeasLevel
@@ -161,7 +161,7 @@ extern "C" {
 	 *
 	 * @return      Success or Failure
 	 */
-	extern HCI_StatusCode_t Batt_MeasLevel(void);
+	extern uint8_t Batt_MeasLevel(void);
 
 /*********************************************************************
  *********************************************************************/

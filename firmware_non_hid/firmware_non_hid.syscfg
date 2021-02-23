@@ -1,0 +1,174 @@
+/**
+ * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
+ * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
+ * @cliArgs --board "/ti/boards/MSP_EXP432P401R" --product "simplelink_msp432e4_sdk@3.20.00.10"
+ * @versions {"data":"2021010520","timestamp":"2021010520","tool":"1.7.0+1746","templates":null}
+ */
+
+/**
+ * Import the modules used in this configuration.
+ */
+const ADC       = scripting.addModule("/ti/drivers/ADC", {}, false);
+const ADC1      = ADC.addInstance();
+const ADC2      = ADC.addInstance();
+const ADCBuf    = scripting.addModule("/ti/drivers/ADCBuf", {}, false);
+const ADCBuf1   = ADCBuf.addInstance();
+const DMA       = scripting.addModule("/ti/drivers/DMA");
+const GPIO      = scripting.addModule("/ti/drivers/GPIO");
+const GPIO1     = GPIO.addInstance();
+const GPIO2     = GPIO.addInstance();
+const GPIO3     = GPIO.addInstance();
+const GPIO4     = GPIO.addInstance();
+const GPIO5     = GPIO.addInstance();
+const GPIO6     = GPIO.addInstance();
+const GPIO7     = GPIO.addInstance();
+const GPIO8     = GPIO.addInstance();
+const GPIO9     = GPIO.addInstance();
+const GPIO10    = GPIO.addInstance();
+const GPIO11    = GPIO.addInstance();
+const GPIO12    = GPIO.addInstance();
+const GPIO13    = GPIO.addInstance();
+const GPIO14    = GPIO.addInstance();
+const GPIO15    = GPIO.addInstance();
+const I2CSlave  = scripting.addModule("/ti/drivers/I2CSlave", {}, false);
+const I2CSlave1 = I2CSlave.addInstance();
+const Power     = scripting.addModule("/ti/drivers/Power");
+const SPI       = scripting.addModule("/ti/drivers/SPI", {}, false);
+const SPI1      = SPI.addInstance();
+
+/**
+ * Write custom configuration values to the imported modules.
+ */
+ADC1.referenceVoltage   = "External";
+ADC1.$name              = "Joy_X";
+ADC1.resolution         = "8 Bits";
+ADC1.adc.$assign        = "ADC14";
+ADC1.adc.adcPin.$assign = "expansion.4";
+
+ADC2.referenceVoltage   = "External";
+ADC2.$name              = "Joy_Y";
+ADC2.resolution         = "8 Bits";
+ADC2.adc.$assign        = "ADC14";
+ADC2.adc.adcPin.$assign = "expansion.2";
+
+ADCBuf1.$name                          = "Board_ADCBUF0";
+ADCBuf1.enableDMA                      = false;
+ADCBuf1.triggerSource                  = "Auto";
+ADCBuf1.adc.$assign                    = "ADC14";
+ADCBuf1.adcBufChannel0.$name           = "CHANNEL_0";
+ADCBuf1.adcBufChannel0.referenceSource = "External";
+ADCBuf1.adcBufChannel0.adc.$assign     = "ADC14";
+
+DMA.dmaErrorFunction = "dmaErrorHwi";
+
+GPIO1.$name            = "Button_A";
+GPIO1.pull             = "Pull Up";
+GPIO1.interruptTrigger = "Rising Edge";
+GPIO1.callbackFunction = "NULL";
+GPIO1.gpioPin.$assign  = "boosterpack.24";
+
+GPIO2.$name            = "Button_B";
+GPIO2.pull             = "Pull Up";
+GPIO2.interruptTrigger = "Rising Edge";
+GPIO2.callbackFunction = "NULL";
+GPIO2.gpioPin.$assign  = "boosterpack.5";
+
+GPIO3.$name            = "Button_X";
+GPIO3.pull             = "Pull Up";
+GPIO3.interruptTrigger = "Rising Edge";
+GPIO3.callbackFunction = "NULL";
+GPIO3.gpioPin.$assign  = "boosterpack.25";
+
+GPIO4.$name            = "Button_Y";
+GPIO4.pull             = "Pull Up";
+GPIO4.interruptTrigger = "Rising Edge";
+GPIO4.callbackFunction = "NULL";
+GPIO4.gpioPin.$assign  = "boosterpack.6";
+
+GPIO5.$name            = "Button_Start";
+GPIO5.interruptTrigger = "Rising Edge";
+GPIO5.pull             = "Pull Up";
+GPIO5.callbackFunction = "NULL";
+GPIO5.gpioPin.$assign  = "boosterpack.8";
+
+GPIO6.$name            = "Button_Select";
+GPIO6.interruptTrigger = "Rising Edge";
+GPIO6.callbackFunction = "NULL";
+GPIO6.gpioPin.$assign  = "boosterpack.28";
+
+GPIO7.$name            = "Button_Pairing";
+GPIO7.pull             = "Pull Up";
+GPIO7.interruptTrigger = "Rising Edge";
+GPIO7.callbackFunction = "NULL";
+GPIO7.gpioPin.$assign  = "expansion.11";
+
+GPIO8.$name            = "Trigger_Left";
+GPIO8.interruptTrigger = "Rising Edge";
+GPIO8.pull             = "Pull Up";
+GPIO8.callbackFunction = "NULL";
+GPIO8.gpioPin.$assign  = "boosterpack.26";
+
+GPIO9.$name            = "Trigger_Right";
+GPIO9.interruptTrigger = "Rising Edge";
+GPIO9.pull             = "Pull Up";
+GPIO9.callbackFunction = "NULL";
+GPIO9.gpioPin.$assign  = "boosterpack.27";
+
+GPIO10.$name           = "LCD_RS";
+GPIO10.mode            = "Output";
+GPIO10.outputStrength  = "High";
+GPIO10.gpioPin.$assign = "expansion.18";
+
+GPIO11.$name           = "LCD_EN";
+GPIO11.mode            = "Output";
+GPIO11.outputStrength  = "High";
+GPIO11.gpioPin.$assign = "expansion.15";
+
+GPIO12.$name           = "LCD_D4";
+GPIO12.mode            = "Output";
+GPIO12.outputStrength  = "High";
+GPIO12.gpioPin.$assign = "expansion.27";
+
+GPIO13.$name           = "LCD_D5";
+GPIO13.mode            = "Output";
+GPIO13.outputStrength  = "High";
+GPIO13.gpioPin.$assign = "expansion.28";
+
+GPIO14.$name           = "LCD_D6";
+GPIO14.mode            = "Output";
+GPIO14.outputStrength  = "High";
+GPIO14.gpioPin.$assign = "expansion.29";
+
+GPIO15.$name           = "LCD_D7";
+GPIO15.mode            = "Output";
+GPIO15.outputStrength  = "High";
+GPIO15.gpioPin.$assign = "expansion.30";
+
+I2CSlave1.$name = "Board_I2CSLAVE0";
+
+Power.enablePinParking        = true;
+Power.enablePolicy            = false;
+Power.enablePerformanceLevels = false;
+Power.performanceLevel3.$name = "ti_drivers_power_PowerMSP432PerfLevels0";
+Power.performanceLevel2.$name = "ti_drivers_power_PowerMSP432PerfLevels1";
+Power.performanceLevel1.$name = "ti_drivers_power_PowerMSP432PerfLevels2";
+Power.performanceLevel0.$name = "ti_drivers_power_PowerMSP432PerfLevels3";
+
+SPI1.duplex                         = "Master TX Only";
+SPI1.$name                          = "LED_Matrix";
+SPI1.spi.$assign                    = "EUSCI_A3";
+SPI1.spi.sclkPin.$assign            = "expansion.20";
+SPI1.spi.mosiPin.$assign            = "expansion.22";
+SPI1.spi.dmaTxChannel.$assign       = "DMA_CH6";
+SPI1.spi.dmaInterruptNumber.$assign = "DMA_INT0";
+
+/**
+ * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
+ * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
+ * re-solve from scratch.
+ */
+ADCBuf1.adc.$suggestSolution                = "<error>";
+ADCBuf1.adcBufChannel0.adc.$suggestSolution = "<error>";
+I2CSlave1.i2c.$suggestSolution              = "EUSCI_B0";
+I2CSlave1.i2c.sdaPin.$suggestSolution       = "boosterpack.15";
+I2CSlave1.i2c.sclPin.$suggestSolution       = "boosterpack.14";
