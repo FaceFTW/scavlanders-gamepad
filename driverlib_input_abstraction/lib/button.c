@@ -71,51 +71,8 @@ void init_button(){
        MAP_Interrupt_enableMaster();
 
 }
-void PORT1_IRQHandler(void){
-    uint32_t status_pad = MAP_GPIO_getEnabledInterruptStatus(botton_port1);
-    uint32_t status_pair = MAP_GPIO_getEnabledInterruptStatus(botton_port2);
 
 
-    // might need the configuration of the ports
-    MAP_GPIO_clearInterruptFlag(botton_port1, status_pad);
-    MAP_GPIO_clearInterruptFlag(botton_port2, status_pair);
-    if (status_pad & botton_A)
-    {
-        printf("button A is pressed! ");
-    }
-    else if (status_pad & botton_B)
-    {
-        printf("button B is pressed! ");
-    }
-    else if (status_pad & botton_X)
-    {
-        printf("button X is pressed! ");
-    }
-    else if (status_pad & botton_Y)
-    {
-        printf("button Y is pressed! ");
-    }
 
-    else if (status_pad & botton_Start)
-    {
-        printf("button Start is pressed! ");
-    }
-    else if (status_pad & botton_Sel)
-    {
-        printf("button Sel is pressed! ");
-    }
-    else if (status_pad & botton_trigger_left)
-    {
-        printf("button trigger left is pressed! ");
-    }
-    else if (status_pad & botton_trigger_right)
-    {
-        printf("button trigger right is pressed! ");
-    }
-    else if (status_pair & botton_P)
-    {
 
-        printf("button P is pressed! ");
-    }
 
-}

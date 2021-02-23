@@ -15,12 +15,6 @@
 #include <stdlib.h>                                         //Standard C Libary
 static uint16_t resultsBuffer[8];
 
-volatile float analog_x;
-volatile float analog_y;
-
-
-volatile uint8_t x_value;
-volatile uint8_t y_value;
 
 
 
@@ -79,33 +73,6 @@ void init_joy(){
         /* Triggering the start of the sample */
         MAP_ADC14_enableConversion();
         MAP_ADC14_toggleConversionTrigger();
-
-
-}
-void printvalue(void){
-    printf("%d", x_value );
-    printf("%d", y_value );
-    printf("%d", analog_x);
-    printf("%d", analog_y);
-
-}
-
-void ADC14_IRQHandler(void){
-    uint64_t status = MAP_ADC14_getEnabledInterruptStatus();
-    MAP_ADC14_clearInterruptFlag(status);
-    if(ADC_INT0 & status){
-    x_value = ADC14_getResult(ADC_MEM0);
-    y_value = ADC14_getResult(ADC_MEM1);
-
-    analog_x = (float) (((x_value * 3.3) -1.75)/16384);
-    analog_y = (float) (((y_value * 3.3) -1.75)/16384);
-    ADC14_toggleConversionTrigger();
-
-    }
-    printvalue();
-    MAP_ADC14_clearInterruptFlag(status);
-
-
 
 
 }

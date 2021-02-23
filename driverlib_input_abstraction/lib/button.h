@@ -24,9 +24,11 @@
 #define botton_Sel              GPIO_PIN7
 #define botton_port2            GPIO_PORT_P6
 #define botton_P                GPIO_PIN2
-
 #define button_all              0x0007
 
+#define UART_PORT       GPIO_PORT_P1
+#define UART_TX         GPIO_PIN3
+#define UART_RX         GPIO_PIN2
 
 
 /***********************************************************************
