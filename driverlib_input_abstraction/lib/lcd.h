@@ -7,6 +7,11 @@
  ***********************************************************************/
 #ifndef LIB_LCD_H_
 #define LIB_LCD_H_
+#include <ti/devices/msp432p4xx/driverlib/driverlib.h>      //TI MSP432 DriverLib SDK
+#include <stdio.h>                                          //Standard C IO Library
+#include <stdint.h>                                         //Standard C Integer Library
+#include <stdbool.h>                                        //Standard C Boolean Library
+#include <stdlib.h>                                         //Standard C Libary
 
 /***********************************************************************
  * 						    INCLUDE DELCARATIONS					   *
@@ -15,31 +20,23 @@
 /***********************************************************************
  * 						PREPROCESSOR MACROS/DEFINES					   *
 ***********************************************************************/
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 // Notation: this code is from Alex, which he authoriezed me to use it in the project.
 // Since we are using 4 bit mode instead of 8 bit, which is Alex.s project 5 code.
-#define LCD_CFG_PORT        GPIO_PORT_P3    //LCD Control Port
-#define LCD_RS              GPIO_PIN7       //LCD Control Register Select Pin
-#define LCD_EN              GPIO_PIN6       //LCD Control Enable Pin
-#define LCD_DAT_PORT        GPIO_PORT_P2    //LCD Data Signal Port
+#define LCD_CFG_PORT        GPIO_PORT_P7    //LCD Control Port
+#define LCD_RS              GPIO_PIN0       //LCD Control Register Select Pin
+#define LCD_EN              GPIO_PIN1       //LCD Control Enable Pin
+#define LCD_DAT_PORT        GPIO_PORT_P10    //LCD Data Signal Port
 #define LCD_D4              GPIO_PIN4       //LCD Data Pin 4
 #define LCD_D5              GPIO_PIN5       //LCD Data Pin 5
 #define LCD_D6              GPIO_PIN6       //LCD Data Pin 6
 #define LCD_D7              GPIO_PIN7       //LCD Data Pin 7
 
-#define ANALOG_IN_PORT      GPIO_PORT_P6    //Analog Input GPIO Port
-#define ANALOG_POT_PIN      GPIO_PIN0       //Analog Input: Potentiometer Pin
-#define ANALOG_PHOTO_PIN    GPIO_PIN1       //Analog Input: Photoresistor Pin
-#define ANALOG_POT_CH       ADC_INPUT_A15   //Analog Input Channel A15
-#define ANALOG_PHOTO_CH     ADC_INPUT_A14   //Analog Input Channel A14
-#define ANALOG_REF_PORT     GPIO_PORT_P5    //Analog Reference Voltage Port
-#define ANALOG_POS_PIN      GPIO_PIN6       //Analog Reference Voltage Positive Pin
-#define ANALOG_NEG_PIN      GPIO_PIN7       //Analog Reference Voltage Negative Pin
 
-#define ANALOG_POT          0               //Analog Input: Potentiometer Pin
-#define ANALOG_PHOTO        1               //Analog Input: Photoresistor Pin
 
-#define SW_PORT             GPIO_PORT_P1    //Switch Input Port
-#define SW_PIN              GPIO_PIN1       //Switch Input Pin
 
 /**TIMER MACROS**/
 #define REFRESH_CYCLE   32768               //1 Hz
@@ -99,7 +96,26 @@
 /***********************************************************************
  * 							FUNCTION PROTOTYPES						   *
 ***********************************************************************/
+extern int delayMicroSec(uint32_t micros);
 
+extern int delayMilliSec(uint32_t millis) ;
+
+extern void instructionDelay(uint8_t mode, uint8_t instruction);
+
+extern void writeInstruction(uint8_t mode, uint8_t instruction);
+
+extern void initLCD(void);
+
+extern void dataInstruction(uint8_t data);
+
+extern void printChar(char character);
+
+extern void testLCD(void);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* LIB_LCD_H_ */

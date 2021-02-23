@@ -6,6 +6,13 @@
  * \version: Feb 11, 2021
  ***********************************************************************/
 #include "lib/lcd.h"
+#include <ti/devices/msp432p4xx/driverlib/driverlib.h>      //TI MSP432 DriverLib SDK
+#include <stdio.h>                                          //Standard C IO Library
+#include <stdint.h>                                         //Standard C Integer Library
+#include <stdbool.h>                                        //Standard C Boolean Library
+#include <stdlib.h>                                         //Standard C Libary
+
+uint64_t sysClkFreq = 0;
 
 /***********************************************************************
  * 							FUNCTION DECLARATIONS					   *
@@ -136,4 +143,24 @@ void initLCD(void) {
 
 }
 
+void dataInstruction(uint8_t data) {
+    writeInstruction(DATA_MODE, data);
+}
 
+void printChar(char character) {
+    dataInstruction(character);
+}
+
+void testLCD(void){
+    printChar('T');
+    printChar('e');
+    printChar('s');
+    printChar('t');
+    printChar(' ');
+    printChar('1');
+    printChar('2');
+    printChar('3');
+    printChar('!');
+
+
+}
