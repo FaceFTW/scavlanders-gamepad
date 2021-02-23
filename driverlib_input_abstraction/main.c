@@ -51,6 +51,7 @@ int main(void) {
 	while (1) {
 	    initLCD();
 	    testLCD();
+	    init_joy();
 	    init_button();
 	    while((SysTick_CTRL_COUNTFLAG_Msk & SysTick-> CTRL) == 0){
 
@@ -66,4 +67,6 @@ int main(void) {
 /***********************************************************************
  * 						INTERRUPT SERVICE ROUTINES		      		   *
 ***********************************************************************/
-
+extern void ADC14_IRQHandler();
+extern void PORT1_IRQHandler();
+extern void DMA_INT1_IRQHandler();

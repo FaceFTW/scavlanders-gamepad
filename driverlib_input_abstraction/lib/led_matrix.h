@@ -13,6 +13,8 @@
 #define LED_Matrix_Port      GPIO_PORT_P9
 #define LED_Matrix_SDA       GPIO_PIN7
 #define LED_Matrix_SCL       GPIO_PIN5
+static DMA_ControlTable MSP_EXP432P401RLP_DMAControlTable[32];
+#define MAP_SPI_MSG_LENGTH    26
 /***********************************************************************
  *                      PREPROCESSOR MACROS/DEFINES                    *
 ***********************************************************************/
