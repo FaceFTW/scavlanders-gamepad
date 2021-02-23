@@ -33,7 +33,7 @@ const char uartInitTR[] = "button TR is pressed! ";
 const char uartInitSEL[] = "button Sel is pressed! ";
 const char uartInitSTART[] = "button START is pressed! ";
 const char uartInitP[] = "button PAIR is pressed! ";
-
+#define length(x) (sizeof(x)/sizeof(x[0]))
 
 const eUSCI_UART_ConfigV1 uartCfg = {
 EUSCI_A_UART_CLOCKSOURCE_SMCLK,                         // SMCLK Clock Source
@@ -69,7 +69,7 @@ void init_UART(void){
         /**UART_CONFIG**/
         UART_initModule(EUSCI_A0_BASE, &uartCfg);
         UART_enableModule(EUSCI_A0_BASE);
-        transmitString(uartInit, strlen(uartInit));
+        transmitString(uartInit, length(uartInit));
 
 }
 void transmitString(char *data, uint8_t len) {
@@ -159,41 +159,41 @@ void PORT1_IRQHandler(void){
     MAP_GPIO_clearInterruptFlag(botton_port2, status_pair);
     if (status_pad & botton_A)
     {
-        transmitString(uartInitA, strlen(uartInitA));
+        transmitString(uartInitA, length(uartInitA));
     }
     else if (status_pad & botton_B)
     {
-        transmitString(uartInitB, strlen(uartInitB));
+        transmitString(uartInitB, length(uartInitB));
     }
     else if (status_pad & botton_X)
     {
-        transmitString(uartInitX, strlen(uartInitX));
+        transmitString(uartInitX, length(uartInitX));
     }
     else if (status_pad & botton_Y)
     {
-        transmitString(uartInitY, strlen(uartInitY));
+        transmitString(uartInitY, length(uartInitY));
     }
 
     else if (status_pad & botton_Start)
     {
-        transmitString(uartInitSTART, strlen(uartInitSTART));
+        transmitString(uartInitSTART, length(uartInitSTART));
     }
     else if (status_pad & botton_Sel)
     {
-        transmitString(uartInitSEL, strlen(uartInitSEL));
+        transmitString(uartInitSEL, length(uartInitSEL));
     }
     else if (status_pad & botton_trigger_left)
     {
-        transmitString(uartInitTL, strlen(uartInitTL));
+        transmitString(uartInitTL, length(uartInitTL));
     }
     else if (status_pad & botton_trigger_right)
     {
-        transmitString(uartInitTR, strlen(uartInitTR));
+        transmitString(uartInitTR, length(uartInitTR));
     }
     else if (status_pair & botton_P)
     {
 
-        transmitString(uartInitP, strlen(uartInitP));
+        transmitString(uartInitP, length(uartInitP));
     }
 
 }
